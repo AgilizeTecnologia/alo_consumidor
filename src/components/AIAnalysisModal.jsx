@@ -126,12 +126,16 @@ const AIAnalysisModal = ({
               {analysisStep === 'analyzing' && (
                 <div className="space-y-6">
                   <div className="text-center">
-                    {/* Brain icon with spinning animation */}
-                    <div className="relative w-24 h-24 mx-auto mb-4">
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <Brain className="w-16 h-16 text-blue-600 animate-spin" />
-                      </div>
-                      <div className="absolute inset-0 border-4 border-blue-200 rounded-full animate-ping"></div>
+                    {/* Code image instead of spinning brain */}
+                    <div className="relative w-80 h-80 mx-auto mb-4">
+                      <iframe 
+                        src="https://assets.pinterest.com/ext/embed.html?id=15340454978034567" 
+                        height="295" 
+                        width="345" 
+                        frameBorder="0" 
+                        scrolling="no"
+                        className="mx-auto"
+                      ></iframe>
                     </div>
                     <h3 className="text-lg font-semibold mb-2">Analisando Conteúdo...</h3>
                     <p className="text-gray-600 mb-4">
