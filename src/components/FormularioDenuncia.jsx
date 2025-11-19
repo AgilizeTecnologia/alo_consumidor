@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Camera, Video, MapPin, Upload, X, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
-import AIAnalysisModal from './AIAnalysisModal'; // Import the new AIAnalysisModal
+import AIAnalysisModal from './AIAnalysisModal';
 
 function FormularioDenuncia() {
   const navigate = useNavigate();
@@ -14,8 +14,8 @@ function FormularioDenuncia() {
   const [fotos, setFotos] = useState([]);
   const [videos, setVideos] = useState([]);
   const [localizacao, setLocalizacao] = useState('');
-  const [isModalOpen, setIsModalOpen] = useState(false); // State to control modal visibility
-  const [isSubmitting, setIsSubmitting] = useState(false); // State for actual complaint submission
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleFileChange = (e, type) => {
     const files = Array.from(e.target.files);
@@ -42,14 +42,27 @@ function FormularioDenuncia() {
       return;
     }
 
-    // Open the AI analysis modal
     setIsModalOpen(true);
   };
 
-  const handleTalkToMediator = () => {
+  const handleTalkToMediator = (type) => {
     setIsModalOpen(false);
-    toast.info('Redirecionando para atendimento com mediador...');
-    navigate('/atendimento');
+    toast.info(`Iniciando atendimento por ${type}...`);
+    
+    // Simulate the selected type of mediation
+    if (type === 'chat') {
+      // Navigate to chat interface
+      setTimeout(() => {
+        navigate('/atendimento');
+        toast.success('Atendimento por chat iniciado! Um mediador entrará em contato.');
+      }, 1000);
+    } else if (type === 'video') {
+      // Navigate to video call interface
+      setTimeout(() => {
+        navigate('/atendimento');
+        toast.success('Atendimento por vídeo iniciado! Um mediador entrará em contato.');
+      }, 1000);
+    }
   };
 
   const handleFinalizeComplaint = async (aiAnalysisResult) => {
@@ -63,7 +76,7 @@ function FormularioDenuncia() {
         photos: fotos.map(file => file.name),
         videos: videos.map(file => file.name),
         location: localizacao,
-        aiAnalysis: aiAnalysisResult // Include AI analysis in the submission
+        aiAnalysis: aiAnalysisResult
       };
 
       const response = await fetch('/api/complaints', {
