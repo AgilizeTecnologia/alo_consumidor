@@ -3,19 +3,18 @@ import { Brain, CheckCircle, Phone, X, Loader2 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Dialog, DialogContent } from './ui/dialog';
-import AtendimentoOptionsModal from './AtendimentoOptionsModal';
+import ChatInterface from './ChatInterface'; // Import the chat interface
 
 const AIAnalysisModal = ({ 
   isOpen, 
   onClose, 
   complaintData, 
-  onTalkToMediator, 
   onFinalizeComplaint 
 }) => {
   const [analysisStep, setAnalysisStep] = useState('initial'); // 'initial', 'analyzing', 'results'
   const [aiAnalysis, setAiAnalysis] = useState(null);
   const [progress, setProgress] = useState(0);
-  const [showAtendimentoOptions, setShowAtendimentoOptions] = useState(false);
+  const [showChat, setShowChat] = useState(false);
 
   // Simulate AI analysis with 15 seconds
   const simulateAnalysis = async (description) => {
@@ -75,16 +74,17 @@ const AIAnalysisModal = ({
       setAnalysisStep('initial');
       setProgress(0);
       setAiAnalysis(null);
-      setShowAtendimentoOptions(false);
+      setShowChat(false);
     }
   }, [isOpen, complaintData]);
 
-  const handleTalkToMediator = () => {
-    setShowAtendimentoOptions(true);
+  const handleStartChat = () => {
+    setShowChat(true);
   };
 
-  const handleAtendimentoSelect = (type) => {
-    onTalkToMediator(type);
+  const handleEndChat = () => {
+    setShowChat(false);
+    onClose();
   };
 
   if (!isOpen) return null;
@@ -96,7 +96,7 @@ const AIAnalysisModal = ({
           <Card className="w-full border-none shadow-none">
             <CardHeader className="text-center pb-4">
               <div className="flex justify-between items-center">
-                <div></div>
+                <div></div> {/* Placeholder for alignment */}
                 <CardTitle className="text-xl font-bold text-gdf-gradient flex items-center">
                   <Brain className="w-6 h-6 mr-2" />
                   Análise Inteligente da Denúncia
@@ -126,6 +126,7 @@ const AIAnalysisModal = ({
               {analysisStep === 'analyzing' && (
                 <div className="space-y-6">
                   <div className="text-center">
+                    {/* Brain icon with spinning animation */}
                     <div className="relative w-24 h-24 mx-auto mb-4">
                       <div className="absolute inset-0 flex items-center justify-center">
                         <Brain className="w-16 h-16 text-blue-600 animate-spin" />
@@ -176,7 +177,7 @@ const AIAnalysisModal = ({
                 </div>
               )}
 
-              {analysisStep === 'results' && aiAnalysis && !showAtendimentoOptions && (
+              {analysisStep === 'results' && aiAnalysis && !showChat && (
                 <div className="space-y-6">
                   <div className="text-center">
                     <CheckCircle className="w-16 h-16 mx-auto mb-4 text-green-500" />
@@ -209,11 +210,11 @@ const AIAnalysisModal = ({
                     </p>
                     <div className="flex flex-col md:flex-row gap-4 justify-center">
                       <Button
-                        onClick={handleTalkToMediator}
+                        onClick={handleStartChat}
                         className="bg-green-600 hover:bg-green-700 text-white flex-1"
                       >
                         <Phone className="w-4 h-4 mr-2" />
-                        Sim, quero conversar com um mediador
+                        Sim, iniciar conversa
                       </Button>
                       <Button
                         onClick={onFinalizeComplaint}
@@ -221,7 +222,7 @@ const AIAnalysisModal = ({
                         className="flex-1"
                       >
                         <CheckCircle className="w-4 h-4 mr-2" />
-                        Estou satisfeito com a resposta
+                        Estou satisfeito com o atendimento
                       </Button>
                     </div>
                   </div>
@@ -232,11 +233,11 @@ const AIAnalysisModal = ({
         </DialogContent>
       </Dialog>
 
-      {/* Atendimento Options Modal */}
-      <AtendimentoOptionsModal
-        isOpen={showAtendimentoOptions}
-        onClose={() => setShowAtendimentoOptions(false)}
-        onAtendimentoSelect={handleAtendimentoSelect}
+      {/* Chat Interface */}
+      <ChatInterface
+        isOpen={showChat}
+        onClose={() => setShowChat(false)}
+        onEndChat={handleEndChat}
       />
     </>
   );

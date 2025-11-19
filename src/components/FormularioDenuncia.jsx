@@ -45,26 +45,6 @@ function FormularioDenuncia() {
     setIsModalOpen(true);
   };
 
-  const handleTalkToMediator = (type) => {
-    setIsModalOpen(false);
-    toast.info(`Iniciando atendimento por ${type}...`);
-    
-    // Simulate the selected type of mediation
-    if (type === 'chat') {
-      // Navigate to chat interface
-      setTimeout(() => {
-        navigate('/atendimento');
-        toast.success('Atendimento por chat iniciado! Um mediador entrará em contato.');
-      }, 1000);
-    } else if (type === 'video') {
-      // Navigate to video call interface
-      setTimeout(() => {
-        navigate('/atendimento');
-        toast.success('Atendimento por vídeo iniciado! Um mediador entrará em contato.');
-      }, 1000);
-    }
-  };
-
   const handleFinalizeComplaint = async (aiAnalysisResult) => {
     setIsModalOpen(false);
     setIsSubmitting(true);
@@ -327,7 +307,6 @@ function FormularioDenuncia() {
           videos: videos,
           location: localizacao
         }}
-        onTalkToMediator={handleTalkToMediator}
         onFinalizeComplaint={handleFinalizeComplaint}
       />
     </div>
