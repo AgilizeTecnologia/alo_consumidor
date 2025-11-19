@@ -4,17 +4,21 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Dialog, DialogContent } from './ui/dialog';
+import { complaintService } from '../services/complaintService';
 
 const ChatInterface = ({ 
   isOpen, 
   onClose, 
-  onEndChat 
+  onEndChat,
+  complaintData,
+  aiAnalysis 
 }) => {
   const [messages, setMessages] = useState([]);
   const [userInput, setUserInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [protocolNumber, setProtocolNumber] = useState('');
   const [showProtocol, setShowProtocol] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   // Generate a random protocol number
   const generateProtocol = () => {
@@ -82,17 +86,41 @@ const ChatInterface = ({
     }, 2000);
   };
 
-  const handleEndChat = () => {
-    // Add final message with protocol
-    const finalMessage = {
-      id: messages.length + 1,
-      sender: 'mediator',
-      text: `Obrigado pelo seu contato! Seu protocolo é: ${protocolNumber}. Você receberá um e-mail com o resumo deste atendimento em breve.`,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    };
+  const handleEndChat = async () => {
+    setIsProcessing(true);
     
-    setMessages(prev => [...prev, finalMessage]);
-    setShowProtocol(true);
+    try {
+      // Process complaint and generate protocol
+      const result = await complaintService.processComplaint(complaintData, aiAnalysis);
+      
+      // Send email notification
+      await complaintService.sendEmailNotification(complaintData, result.protocolNumber, aiAnalysis);
+      
+      // Add final message with protocol
+      const finalMessage = {
+        id: messages.length + 1,
+        sender: 'mediator',
+        text: `Obrigado pelo seu contato! Seu protocolo é: ${result.protocolNumber}. Você receberá um e-mail com o resumo deste atendimento em breve.`,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+      
+      setMessages(prev => [...prev, finalMessage]);
+      setShowProtocol(true);
+    } catch (error) {
+      console.error('Error processing complaint:', error);
+      // Add error message
+      const errorMessage = {
+        id: messages.length + 1,
+        sender: 'mediator',
+        text: 'Ocorreu um erro ao processar seu atendimento. Por favor, tente novamente ou entre em contato diretamente.',
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+      
+      setMessages(prev => [...prev, errorMessage]);
+      setShowProtocol(true);
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const handleFinalize = () => {
@@ -200,13 +228,21 @@ const ChatInterface = ({
                   Seu protocolo é: <span className="font-bold text-lg">{protocolNumber}</span>
                 </p>
                 <p className="text-green-700 mb-6">
-                  O resumo deste atendimento e o número do protocolo serão enviados para o seu e-mail em breve.
+                  O resumo deste atendimento e o número do protocolo foram enviados para o seu e-mail.
                 </p>
                 <Button
                   onClick={handleFinalize}
+                  disabled={isProcessing}
                   className="bg-green-600 hover:bg-green-700 text-white"
                 >
-                  Finalizar Atendimento e Sair do Sistema
+                  {isProcessing ? (
+                    <>
+                      <div className="gdf-loader w-4 h-4 mr-2"></div>
+                      Finalizando...
+                    </>
+                  ) : (
+                    'Finalizar Atendimento e Sair do Sistema'
+                  )}
                 </Button>
               </div>
             )}

@@ -4,6 +4,7 @@ import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Dialog, DialogContent } from './ui/dialog';
 import ChatInterface from './ChatInterface'; // Import the chat interface
+import { complaintService } from '../services/complaintService';
 
 const AIAnalysisModal = ({ 
   isOpen, 
@@ -85,6 +86,21 @@ const AIAnalysisModal = ({
   const handleEndChat = () => {
     setShowChat(false);
     onClose();
+  };
+
+  const handleFinalizeComplaint = async () => {
+    try {
+      // Process complaint and generate protocol
+      const result = await complaintService.processComplaint(complaintData, aiAnalysis);
+      
+      // Send email notification
+      await complaintService.sendEmailNotification(complaintData, result.protocolNumber, aiAnalysis);
+      
+      onFinalizeComplaint();
+    } catch (error) {
+      console.error('Error processing complaint:', error);
+      onFinalizeComplaint();
+    }
   };
 
   if (!isOpen) return null;
@@ -221,7 +237,7 @@ const AIAnalysisModal = ({
                         Conversar com o mediador/atendente humano
                       </Button>
                       <Button
-                        onClick={onFinalizeComplaint}
+                        onClick={handleFinalizeComplaint}
                         variant="outline"
                         className="flex-1"
                       >
@@ -242,6 +258,8 @@ const AIAnalysisModal = ({
         isOpen={showChat}
         onClose={() => setShowChat(false)}
         onEndChat={handleEndChat}
+        complaintData={complaintData}
+        aiAnalysis={aiAnalysis}
       />
     </>
   );
