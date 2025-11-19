@@ -4,30 +4,76 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Camera, Video, MapPin, Brain, CheckCircle, AlertCircle, Upload, X } from 'lucide-react';
+import { toast } from 'sonner'; // Assuming sonner is available from previous steps
 
 function FormularioDenuncia() {
   const [descricao, setDescricao] = useState('');
   const [fotos, setFotos] = useState([]);
   const [videos, setVideos] = useState([]);
   const [localizacao, setLocalizacao] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState(null);
+  const [loading, setLoading] = useState(false); // Overall loading for submission
   const [aiAnalysis, setAiAnalysis] = useState(null);
-  const [analyzing, setAnalyzing] = useState(false);
+  const [analyzingAI, setAnalyzingAI] = useState(false); // Specific loading for AI analysis
+
+  // Helper to simulate delay
+  const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+  // Simulate AI analysis
+  const simulateAIAnalysis = async (description) => {
+    await delay(2000); // Simulate AI processing time
+    if (description.toLowerCase().includes('produto com defeito')) {
+      return {
+        cdc_article: 'Art. 18 - Vício do Produto ou Serviço',
+        mediation_guidance: 'O fornecedor tem 30 dias para sanar o vício. Caso contrário, o consumidor pode exigir a substituição do produto, a restituição imediata da quantia paga ou o abatimento proporcional do preço.'
+      };
+    } else if (description.toLowerCase().includes('atendimento ruim')) {
+      return {
+        cdc_article: 'Art. 6º, III e IV - Direitos Básicos do Consumidor',
+        mediation_guidance: 'O consumidor tem direito à informação clara e adequada e à proteção contra práticas abusivas. Recomenda-se registrar a ocorrência e buscar a mediação para uma solução amigável.'
+      };
+    } else if (description.toLowerCase().includes('propaganda enganosa')) {
+      return {
+        cdc_article: 'Art. 37 - Publicidade Enganosa ou Abusiva',
+        mediation_guidance: 'A publicidade enganosa é proibida. O consumidor pode exigir o cumprimento da oferta, a rescisão do contrato com restituição ou o abatimento proporcional do preço.'
+      };
+    } else {
+      return {
+        cdc_article: 'Art. 6º - Direitos Básicos do Consumidor',
+        mediation_guidance: 'Sua denúncia será analisada por um mediador. Mantenha todas as evidências e aguarde o contato para os próximos passos.'
+      };
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setMessage(null);
+    setAiAnalysis(null); // Clear previous analysis
 
-    const complaintData = {
-      description: descricao,
-      photos: fotos.map(file => file.name),
-      videos: videos.map(file => file.name),
-      location: localizacao,
-    };
+    if (!descricao.trim()) {
+      toast.error('Por favor, descreva o problema antes de enviar a denúncia.');
+      setLoading(false);
+      return;
+    }
 
     try {
+      // 1. Simulate AI Analysis
+      setAnalyzingAI(true);
+      toast.info('A IA está analisando sua denúncia...');
+      const analysisResult = await simulateAIAnalysis(descricao);
+      setAiAnalysis(analysisResult);
+      setAnalyzingAI(false);
+      toast.success('Análise da IA concluída!');
+
+      // 2. Submit Complaint
+      toast.info('Enviando sua denúncia...');
+      const complaintData = {
+        description: descricao,
+        photos: fotos.map(file => file.name),
+        videos: videos.map(file => file.name),
+        location: localizacao,
+        aiAnalysis: analysisResult // Include AI analysis in the submission
+      };
+
       const response = await fetch('/api/complaints', {
         method: 'POST',
         headers: {
@@ -38,25 +84,22 @@ function FormularioDenuncia() {
 
       if (response.ok) {
         const result = await response.json();
-        setMessage({ 
-          type: 'success', 
-          text: `Denúncia enviada com sucesso! ID: ${result.id}. Um mediador entrará em contato em breve.` 
-        });
+        toast.success(`Denúncia enviada com sucesso! ID: ${result.id}. Um mediador entrará em contato em breve.`);
         
         // Resetar formulário
         setDescricao('');
         setFotos([]);
         setVideos([]);
         setLocalizacao('');
-        setAiAnalysis(null);
       } else {
         const errorData = await response.json();
-        setMessage({ type: 'error', text: 'Erro ao enviar denúncia: ' + (errorData.message || 'Erro desconhecido') });
+        toast.error('Erro ao enviar denúncia: ' + (errorData.message || 'Erro desconhecido'));
       }
     } catch (error) {
-      setMessage({ type: 'error', text: 'Erro de rede ao enviar denúncia: ' + error.message });
+      toast.error('Erro ao processar denúncia: ' + error.message);
     } finally {
       setLoading(false);
+      setAnalyzingAI(false); // Ensure this is reset
     }
   };
 
@@ -77,35 +120,6 @@ function FormularioDenuncia() {
     }
   };
 
-  const analyzeWithAI = async () => {
-    if (!descricao.trim()) {
-      setMessage({ type: 'error', text: 'Por favor, descreva o problema antes de solicitar análise da IA.' });
-      return;
-    }
-
-    setAnalyzing(true);
-    try {
-      const response = await fetch('/api/ai/analyze-complaint', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ description: descricao }),
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        setAiAnalysis(result);
-      } else {
-        setMessage({ type: 'error', text: 'Erro ao analisar com IA. Tente novamente.' });
-      }
-    } catch (error) {
-      setMessage({ type: 'error', text: 'Erro de rede ao analisar com IA.' });
-    } finally {
-      setAnalyzing(false);
-    }
-  };
-
   return (
     <div className="max-w-4xl mx-auto">
       <div className="card-modern p-8 animate-fade-in-up">
@@ -117,21 +131,6 @@ function FormularioDenuncia() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {message && (
-            <div className={`p-4 rounded-lg flex items-center space-x-3 animate-fade-in-up ${
-              message.type === 'success' 
-                ? 'bg-green-50 text-green-800 border border-green-200' 
-                : 'bg-red-50 text-red-800 border border-red-200'
-            }`}>
-              {message.type === 'success' ? (
-                <CheckCircle className="w-5 h-5 flex-shrink-0" />
-              ) : (
-                <AlertCircle className="w-5 h-5 flex-shrink-0" />
-              )}
-              <span>{message.text}</span>
-            </div>
-          )}
-
           {/* Descrição */}
           <div className="space-y-2">
             <Label htmlFor="descricao" className="text-lg font-semibold text-gray-700">
@@ -150,15 +149,6 @@ function FormularioDenuncia() {
               <span className="text-sm text-gray-500">
                 {descricao.length}/1000 caracteres
               </span>
-              <button
-                type="button"
-                onClick={analyzeWithAI}
-                disabled={analyzing || !descricao.trim()}
-                className="btn-gdf-secondary flex items-center space-x-2 text-sm px-4 py-2"
-              >
-                <Brain className="w-4 h-4" />
-                <span>{analyzing ? 'Analisando...' : 'Analisar com IA'}</span>
-              </button>
             </div>
           </div>
 
@@ -297,7 +287,9 @@ function FormularioDenuncia() {
               {loading ? (
                 <>
                   <div className="gdf-loader w-5 h-5"></div>
-                  <span>Enviando Denúncia...</span>
+                  <span>
+                    {analyzingAI ? 'Analisando com IA...' : 'Enviando Denúncia...'}
+                  </span>
                 </>
               ) : (
                 <>
