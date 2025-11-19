@@ -277,6 +277,38 @@ export const authService = {
       exists: !!existingUser,
       user: existingUser ? { cpf: existingUser.cpf, email: existingUser.email } : null
     };
+  },
+
+  // Criar usuário de teste se não existir
+  async createTestUser() {
+    const testCpf = '11111111111';
+    const testEmail = 'teste@example.com';
+    const testPassword = 'password';
+    const testNome = 'Usuário Teste';
+    const testTelefone = '61987654321';
+
+    const users = getUsers();
+    const existingTestUser = users.find(user => user.cpf === testCpf);
+
+    if (!existingTestUser) {
+      const newUser = {
+        id: 'test-user-id',
+        nome: testNome,
+        cpf: testCpf,
+        email: testEmail,
+        telefone: testTelefone,
+        emailNotifications: true,
+        whatsappNotifications: true,
+        isWhatsapp: true,
+        password: testPassword, // Em produção, seria hasheada
+        createdAt: new Date().toISOString(),
+        isActive: true
+      };
+      users.push(newUser);
+      saveUsers(users);
+      console.log('Usuário de teste criado:', newUser);
+    }
+    return { cpf: testCpf, password: testPassword };
   }
 };
 

@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { authService } from '../services/authService'; // Import authService
 
 const AuthContext = createContext();
 
@@ -16,16 +17,23 @@ export const AuthProvider = ({ children }) => {
 
   // Verificar se há um usuário logado no localStorage ao inicializar
   useEffect(() => {
-    const savedUser = localStorage.getItem('consumer_user');
-    if (savedUser) {
-      try {
-        setUser(JSON.parse(savedUser));
-      } catch (error) {
-        console.error('Erro ao carregar usuário do localStorage:', error);
-        localStorage.removeItem('consumer_user');
+    const initializeAuth = async () => {
+      // Create test user first
+      await authService.createTestUser();
+
+      const savedUser = localStorage.getItem('consumer_user');
+      if (savedUser) {
+        try {
+          setUser(JSON.parse(savedUser));
+        } catch (error) {
+          console.error('Erro ao carregar usuário do localStorage:', error);
+          localStorage.removeItem('consumer_user');
+        }
       }
-    }
-    setIsLoading(false);
+      setIsLoading(false);
+    };
+
+    initializeAuth();
   }, []);
 
   // Função para fazer login
