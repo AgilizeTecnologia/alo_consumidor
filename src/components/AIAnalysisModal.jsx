@@ -16,7 +16,7 @@ const AIAnalysisModal = ({
   const [progress, setProgress] = useState(0);
   const [showChat, setShowChat] = useState(false);
 
-  // Simulate AI analysis with 15 seconds
+  // Simulate AI analysis with 10 seconds
   const simulateAnalysis = async (description) => {
     setAnalysisStep('analyzing');
     setProgress(0);
@@ -32,8 +32,8 @@ const AIAnalysisModal = ({
       });
     }, 500);
 
-    // Simulate AI processing time (15 seconds as requested)
-    await new Promise(resolve => setTimeout(resolve, 15000));
+    // Simulate AI processing time (10 seconds as requested)
+    await new Promise(resolve => setTimeout(resolve, 10000));
 
     clearInterval(progressInterval);
 
