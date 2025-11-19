@@ -212,9 +212,11 @@ export const authService = {
       throw new Error('CPF e senha são obrigatórios');
     }
     
+    const cleanedCpf = cpf.replace(/\D/g, ''); // Limpa o CPF recebido
+    
     const users = getUsers();
     const user = users.find(u => 
-      u.cpf === cpf.replace(/\D/g, '') && 
+      u.cpf === cleanedCpf && // Compara com o CPF limpo
       u.password === password && 
       u.isActive
     );
