@@ -206,7 +206,7 @@ const AIAnalysisModal = ({
 
                   <div className="text-center">
                     <p className="text-gray-700 mb-6">
-                      A análise da IA foi concluída. Você está satisfeito com a resposta ou prefere conversar com um mediador humano?
+                      Deseja conversar com o mediador/atendente humano?
                     </p>
                     <div className="flex flex-col md:flex-row gap-4 justify-center">
                       <Button
@@ -214,7 +214,7 @@ const AIAnalysisModal = ({
                         className="bg-green-600 hover:bg-green-700 text-white flex-1"
                       >
                         <Phone className="w-4 h-4 mr-2" />
-                        Sim, iniciar conversa
+                        Conversar com o mediador/atendente humano
                       </Button>
                       <Button
                         onClick={onFinalizeComplaint}

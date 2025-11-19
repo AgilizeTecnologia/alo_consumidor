@@ -206,7 +206,7 @@ const ChatInterface = ({
                   onClick={handleFinalize}
                   className="bg-green-600 hover:bg-green-700 text-white"
                 >
-                  Finalizar Atendimento
+                  Finalizar Atendimento e Sair do Sistema
                 </Button>
               </div>
             )}
