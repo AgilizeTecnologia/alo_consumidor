@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Camera, Video, MapPin, Upload, X, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
-import AIAnalysisModal from './AIAnalysisModal';
+import AIAnalysisModal from './AIAnalysisModal'; // Import the new AIAnalysisModal
 
 function FormularioDenuncia() {
   const navigate = useNavigate();
@@ -14,8 +14,8 @@ function FormularioDenuncia() {
   const [fotos, setFotos] = useState([]);
   const [videos, setVideos] = useState([]);
   const [localizacao, setLocalizacao] = useState('');
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false); // State to control modal visibility
+  const [isSubmitting, setIsSubmitting] = useState(false); // State for actual complaint submission
 
   const handleFileChange = (e, type) => {
     const files = Array.from(e.target.files);
@@ -42,14 +42,6 @@ function FormularioDenuncia() {
       return;
     }
 
-    // Prepare complaint data for AI analysis
-    const complaintData = {
-      description: descricao,
-      photos: fotos.map(file => file.name),
-      videos: videos.map(file => file.name),
-      location: localizacao
-    };
-
     // Open the AI analysis modal
     setIsModalOpen(true);
   };
@@ -60,7 +52,7 @@ function FormularioDenuncia() {
     navigate('/atendimento');
   };
 
-  const handleFinalizeComplaint = async () => {
+  const handleFinalizeComplaint = async (aiAnalysisResult) => {
     setIsModalOpen(false);
     setIsSubmitting(true);
 
@@ -70,7 +62,8 @@ function FormularioDenuncia() {
         description: descricao,
         photos: fotos.map(file => file.name),
         videos: videos.map(file => file.name),
-        location: localizacao
+        location: localizacao,
+        aiAnalysis: aiAnalysisResult // Include AI analysis in the submission
       };
 
       const response = await fetch('/api/complaints', {
