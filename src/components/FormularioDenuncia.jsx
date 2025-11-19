@@ -1,87 +1,68 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom'; // Import useNavigate
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Camera, Video, MapPin, Brain, CheckCircle, AlertCircle, Upload, X, Phone } from 'lucide-react';
+import { Camera, Video, MapPin, Upload, X, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import AIAnalysisModal from './AIAnalysisModal';
 
 function FormularioDenuncia() {
-  const navigate = useNavigate(); // Initialize useNavigate hook
+  const navigate = useNavigate();
   const [descricao, setDescricao] = useState('');
   const [fotos, setFotos] = useState([]);
   const [videos, setVideos] = useState([]);
   const [localizacao, setLocalizacao] = useState('');
-  const [loading, setLoading] = useState(false); // Overall loading for submission
-  const [aiAnalysis, setAiAnalysis] = useState(null);
-  const [analyzingAI, setAnalyzingAI] = useState(false); // Specific loading for AI analysis
-  const [showMediatorPrompt, setShowMediatorPrompt] = useState(false); // State to show mediator prompt
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Helper to simulate delay
-  const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+  const handleFileChange = (e, type) => {
+    const files = Array.from(e.target.files);
+    if (type === 'fotos') {
+      setFotos([...fotos, ...files]);
+    } else if (type === 'videos') {
+      setVideos([...videos, ...files]);
+    }
+  };
 
-  // Simulate AI analysis
-  const simulateAIAnalysis = async (description) => {
-    await delay(30000); // Simulate AI processing time for 30 seconds
-    if (description.toLowerCase().includes('produto com defeito')) {
-      return {
-        cdc_article: 'Art. 18 - Vício do Produto ou Serviço',
-        mediation_guidance: 'O fornecedor tem 30 dias para sanar o vício. Caso contrário, o consumidor pode exigir a substituição do produto, a restituição imediata da quantia paga ou o abatimento proporcional do preço.'
-      };
-    } else if (description.toLowerCase().includes('atendimento ruim')) {
-      return {
-        cdc_article: 'Art. 6º, III e IV - Direitos Básicos do Consumador',
-        mediation_guidance: 'O consumidor tem direito à informação clara e adequada e à proteção contra práticas abusivas. Recomenda-se registrar a ocorrência e buscar a mediação para uma solução amigável.'
-      };
-    } else if (description.toLowerCase().includes('propaganda enganosa')) {
-      return {
-        cdc_article: 'Art. 37 - Publicidade Enganosa ou Abusiva',
-        mediation_guidance: 'A publicidade enganosa é proibida. O consumidor pode exigir o cumprimento da oferta, a rescisão do contrato com restituição ou o abatimento proporcional do preço.'
-      };
-    } else {
-      return {
-        cdc_article: 'Art. 6º - Direitos Básicos do Consumidor',
-        mediation_guidance: 'Sua denúncia será analisada por um mediador. Mantenha todas as evidências e aguarde o contato para os próximos passos.'
-      };
+  const removeFile = (index, type) => {
+    if (type === 'fotos') {
+      setFotos(fotos.filter((_, i) => i !== index));
+    } else if (type === 'videos') {
+      setVideos(videos.filter((_, i) => i !== index));
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setAiAnalysis(null); // Clear previous analysis
-    setShowMediatorPrompt(false); // Reset prompt on new submission
-
+    
     if (!descricao.trim()) {
       toast.error('Por favor, descreva o problema antes de enviar a denúncia.');
-      setLoading(false);
       return;
     }
 
-    try {
-      // 1. Simulate AI Analysis
-      setAnalyzingAI(true);
-      toast.info('A IA está analisando sua denúncia. Isso pode levar alguns segundos...');
-      const analysisResult = await simulateAIAnalysis(descricao);
-      setAiAnalysis(analysisResult);
-      setAnalyzingAI(false);
-      toast.success('Análise da IA concluída!');
+    // Prepare complaint data for AI analysis
+    const complaintData = {
+      description: descricao,
+      photos: fotos.map(file => file.name),
+      videos: videos.map(file => file.name),
+      location: localizacao
+    };
 
-      // After AI analysis, show mediator prompt
-      setShowMediatorPrompt(true);
-      setLoading(false); // Stop overall loading, waiting for user choice
+    // Open the AI analysis modal
+    setIsModalOpen(true);
+  };
 
-    } catch (error) {
-      toast.error('Erro ao processar denúncia: ' + error.message);
-      setLoading(false);
-      setAnalyzingAI(false);
-    }
+  const handleTalkToMediator = () => {
+    setIsModalOpen(false);
+    toast.info('Redirecionando para atendimento com mediador...');
+    navigate('/atendimento');
   };
 
   const handleFinalizeComplaint = async () => {
-    setLoading(true); // Re-enable loading for final submission
-    setShowMediatorPrompt(false); // Hide prompt
+    setIsModalOpen(false);
+    setIsSubmitting(true);
 
     try {
       toast.info('Finalizando sua denúncia...');
@@ -89,8 +70,7 @@ function FormularioDenuncia() {
         description: descricao,
         photos: fotos.map(file => file.name),
         videos: videos.map(file => file.name),
-        location: localizacao,
-        aiAnalysis: aiAnalysis // Use the already generated AI analysis
+        location: localizacao
       };
 
       const response = await fetch('/api/complaints', {
@@ -110,7 +90,6 @@ function FormularioDenuncia() {
         setFotos([]);
         setVideos([]);
         setLocalizacao('');
-        setAiAnalysis(null); // Clear AI analysis after submission
       } else {
         const errorData = await response.json();
         toast.error('Erro ao enviar denúncia: ' + (errorData.message || 'Erro desconhecido'));
@@ -118,31 +97,7 @@ function FormularioDenuncia() {
     } catch (error) {
       toast.error('Erro ao finalizar denúncia: ' + error.message);
     } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleTalkToMediator = () => {
-    toast.info('Redirecionando para atendimento com mediador...');
-    navigate('/atendimento'); // Navigate to the /atendimento page
-    setShowMediatorPrompt(false);
-    setLoading(false); // Ensure loading is off
-  };
-
-  const handleFileChange = (e, type) => {
-    const files = Array.from(e.target.files);
-    if (type === 'fotos') {
-      setFotos([...fotos, ...files]);
-    } else if (type === 'videos') {
-      setVideos([...videos, ...files]);
-    }
-  };
-
-  const removeFile = (index, type) => {
-    if (type === 'fotos') {
-      setFotos(fotos.filter((_, i) => i !== index));
-    } else if (type === 'videos') {
-      setVideos(videos.filter((_, i) => i !== index));
+      setIsSubmitting(false);
     }
   };
 
@@ -177,56 +132,6 @@ function FormularioDenuncia() {
               </span>
             </div>
           </div>
-
-          {/* Análise da IA */}
-          {aiAnalysis && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 animate-fade-in-up">
-              <h4 className="font-semibold text-blue-800 mb-3 flex items-center">
-                <Brain className="w-5 h-5 mr-2" />
-                Análise Inteligente do Problema
-              </h4>
-              <div className="space-y-3">
-                <div>
-                  <strong className="text-blue-700">Artigo do CDC Aplicável:</strong>
-                  <p className="text-blue-600 mt-1">{aiAnalysis.cdc_article}</p>
-                </div>
-                <div>
-                  <strong className="text-blue-700">Orientação para Mediação:</strong>
-                  <p className="text-blue-600 mt-1">{aiAnalysis.mediation_guidance}</p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Prompt para Mediador Humano */}
-          {aiAnalysis && !analyzingAI && showMediatorPrompt && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mt-6 animate-fade-in-up text-center">
-              <h4 className="font-semibold text-yellow-800 mb-3 flex items-center justify-center">
-                <Brain className="w-5 h-5 mr-2" />
-                Próximos Passos da Denúncia
-              </h4>
-              <p className="text-gray-700 mb-4">
-                A análise da IA foi concluída. Gostaria de conversar com um mediador humano para discutir a solução ou prefere finalizar a denúncia?
-              </p>
-              <div className="flex flex-col md:flex-row gap-4 justify-center">
-                <Button
-                  onClick={handleTalkToMediator}
-                  className="bg-green-600 hover:bg-green-700 text-white flex-1"
-                >
-                  <Phone className="w-4 h-4 mr-2" />
-                  Falar com Mediador
-                </Button>
-                <Button
-                  onClick={handleFinalizeComplaint}
-                  variant="outline"
-                  className="flex-1"
-                >
-                  <CheckCircle className="w-4 h-4 mr-2" />
-                  Finalizar Denúncia
-                </Button>
-              </div>
-            </div>
-          )}
 
           {/* Upload de Fotos */}
           <div className="space-y-3">
@@ -337,15 +242,13 @@ function FormularioDenuncia() {
           <div className="pt-6">
             <button
               type="submit"
-              disabled={loading || analyzingAI || showMediatorPrompt} // Disable if overall loading, AI is analyzing, or mediator prompt is active
+              disabled={isSubmitting}
               className="btn-gdf-primary w-full py-4 text-lg font-semibold flex items-center justify-center space-x-2"
             >
-              {loading || analyzingAI ? (
+              {isSubmitting ? (
                 <>
                   <div className="gdf-loader w-5 h-5"></div>
-                  <span>
-                    {analyzingAI ? 'Analisando com IA...' : 'Enviando Denúncia...'}
-                  </span>
+                  <span>Enviando Denúncia...</span>
                 </>
               ) : (
                 <>
@@ -389,24 +292,38 @@ function FormularioDenuncia() {
           <h4 className="font-semibold text-gray-800 mb-3">Dicas para uma boa denúncia</h4>
           <ul className="space-y-2 text-sm text-gray-600">
             <li className="flex items-start">
-              <AlertCircle className="w-4 h-4 mr-2 mt-0.5 text-yellow-500 flex-shrink-0" />
+              <CheckCircle className="w-4 h-4 mr-2 mt-0.5 text-yellow-500 flex-shrink-0" />
               Seja específico sobre datas, valores e produtos
             </li>
             <li className="flex items-start">
-              <AlertCircle className="w-4 h-4 mr-2 mt-0.5 text-yellow-500 flex-shrink-0" />
+              <CheckCircle className="w-4 h-4 mr-2 mt-0.5 text-yellow-500 flex-shrink-0" />
               Anexe fotos de produtos, notas fiscais e preços
             </li>
             <li className="flex items-start">
-              <AlertCircle className="w-4 h-4 mr-2 mt-0.5 text-yellow-500 flex-shrink-0" />
+              <CheckCircle className="w-4 h-4 mr-2 mt-0.5 text-yellow-500 flex-shrink-0" />
               Inclua informações de contato do estabelecimento
             </li>
             <li className="flex items-start">
-              <AlertCircle className="w-4 h-4 mr-2 mt-0.5 text-yellow-500 flex-shrink-0" />
+              <CheckCircle className="w-4 h-4 mr-2 mt-0.5 text-yellow-500 flex-shrink-0" />
               Mantenha documentos originais em sua posse
             </li>
           </ul>
         </div>
       </div>
+
+      {/* AI Analysis Modal */}
+      <AIAnalysisModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        complaintData={{
+          description: descricao,
+          photos: fotos,
+          videos: videos,
+          location: localizacao
+        }}
+        onTalkToMediator={handleTalkToMediator}
+        onFinalizeComplaint={handleFinalizeComplaint}
+      />
     </div>
   );
 }
