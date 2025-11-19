@@ -1,10 +1,21 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import AuthFlow from './AuthFlow';
+import { Loader2 } from 'lucide-react';
 
 const ProtectedRoute = ({ children, requireAuth = true }) => {
-  const { isAuthenticated, login } = useAuth();
+  const { isAuthenticated, login, isLoading } = useAuth();
   const [showAuthFlow, setShowAuthFlow] = useState(false);
+
+  // Se o estado de autenticação ainda está carregando, mostra um indicador de carregamento
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+        <p className="ml-3 text-lg text-gray-600">Carregando autenticação...</p>
+      </div>
+    );
+  }
 
   // Se não requer autenticação, renderiza o conteúdo diretamente
   if (!requireAuth) {
@@ -16,7 +27,7 @@ const ProtectedRoute = ({ children, requireAuth = true }) => {
     return children;
   }
 
-  // Se não está autenticado, mostra o fluxo de autenticação
+  // Se não está autenticado e isLoading é false, mostra o fluxo de autenticação
   const handleAuthSuccess = (userData) => {
     login(userData);
     setShowAuthFlow(false);

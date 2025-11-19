@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, Shield, Phone, FileText, Home as HomeIcon, List, User, LogOut } from 'lucide-react';
 import './App.css';
 import './gdf-styles.css';
@@ -29,6 +29,7 @@ const FloatingElements = () => (
 const Home = () => {
   const { isAuthenticated } = useAuth();
   const [showAuthFlow, setShowAuthFlow] = useState(false);
+  const navigate = useNavigate();
 
   const handleDenunciaClick = (e) => {
     if (!isAuthenticated()) {
@@ -40,7 +41,7 @@ const Home = () => {
   const handleAuthSuccess = (userData) => {
     setShowAuthFlow(false);
     // Redirecionar para a página de denúncias após o login
-    window.location.href = '/denuncias';
+    navigate('/denuncias');
   };
 
   return (
