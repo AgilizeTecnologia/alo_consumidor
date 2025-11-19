@@ -129,6 +129,23 @@ function FormularioDenuncia() {
     setLoading(false); // Ensure loading is off
   };
 
+  const handleFileChange = (e, type) => {
+    const files = Array.from(e.target.files);
+    if (type === 'fotos') {
+      setFotos([...fotos, ...files]);
+    } else if (type === 'videos') {
+      setVideos([...videos, ...files]);
+    }
+  };
+
+  const removeFile = (index, type) => {
+    if (type === 'fotos') {
+      setFotos(fotos.filter((_, i) => i !== index));
+    } else if (type === 'videos') {
+      setVideos(videos.filter((_, i) => i !== index));
+    }
+  };
+
   return (
     <div className="max-w-4xl mx-auto">
       <div className="card-modern p-8 animate-fade-in-up">
@@ -320,7 +337,7 @@ function FormularioDenuncia() {
           <div className="pt-6">
             <button
               type="submit"
-              disabled={loading || analyzingAI} // Disable if overall loading or AI is analyzing
+              disabled={loading || analyzingAI || showMediatorPrompt} // Disable if overall loading, AI is analyzing, or mediator prompt is active
               className="btn-gdf-primary w-full py-4 text-lg font-semibold flex items-center justify-center space-x-2"
             >
               {loading || analyzingAI ? (
