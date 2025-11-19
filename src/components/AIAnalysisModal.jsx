@@ -4,7 +4,9 @@ import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Dialog, DialogContent } from './ui/dialog';
 import ChatInterface from './ChatInterface'; // Import the chat interface
+import SatisfactionSurveyModal from './SatisfactionSurveyModal'; // Import the new SatisfactionSurveyModal
 import { complaintService } from '../services/complaintService';
+import { toast } from 'sonner';
 
 const AIAnalysisModal = ({ 
   isOpen, 
@@ -16,6 +18,8 @@ const AIAnalysisModal = ({
   const [aiAnalysis, setAiAnalysis] = useState(null);
   const [progress, setProgress] = useState(0);
   const [showChat, setShowChat] = useState(false);
+  const [showSatisfactionSurvey, setShowSatisfactionSurvey] = useState(false);
+  const [protocolNumber, setProtocolNumber] = useState('');
   const [error, setError] = useState(null);
 
   // Simulate AI analysis with 10 seconds
@@ -102,6 +106,8 @@ const AIAnalysisModal = ({
       setProgress(0);
       setAiAnalysis(null);
       setShowChat(false);
+      setShowSatisfactionSurvey(false);
+      setProtocolNumber('');
       setError(null);
     }
   }, [isOpen, complaintData]);
@@ -110,31 +116,40 @@ const AIAnalysisModal = ({
     setShowChat(true);
   };
 
-  const handleEndChat = () => {
+  const handleEndChatFromChat = () => {
     setShowChat(false);
-    onClose();
+    onClose(); // Close AIAnalysisModal after chat is finalized
   };
 
-  const handleFinalizeComplaint = async () => {
+  const handleSatisfiedFlow = async () => {
     try {
+      toast.info('Finalizando seu atendimento...');
       // Process complaint and generate protocol
       const result = await complaintService.processComplaint(complaintData, aiAnalysis);
+      setProtocolNumber(result.protocolNumber);
       
       // Send email notification
       await complaintService.sendEmailNotification(complaintData, result.protocolNumber, aiAnalysis);
       
-      onFinalizeComplaint();
+      toast.success('Atendimento concluído! Seu protocolo foi enviado para o seu e-mail.');
+      setShowSatisfactionSurvey(true); // Open satisfaction survey
     } catch (error) {
       console.error('Error processing complaint:', error);
-      onFinalizeComplaint();
+      toast.error('Ocorreu um erro ao finalizar seu atendimento. Por favor, tente novamente.');
+      onClose(); // Close modal even if error
     }
+  };
+
+  const handleCloseSatisfactionSurvey = () => {
+    setShowSatisfactionSurvey(false);
+    onClose(); // Close AIAnalysisModal after survey is done
   };
 
   if (!isOpen) return null;
 
   return (
     <>
-      <Dialog open={isOpen} onOpenChange={onClose}>
+      <Dialog open={isOpen && !showChat && !showSatisfactionSurvey} onOpenChange={onClose}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <Card className="w-full border-none shadow-none">
             <CardHeader className="text-center pb-4">
@@ -227,7 +242,7 @@ const AIAnalysisModal = ({
                 </div>
               )}
 
-              {analysisStep === 'results' && aiAnalysis && !showChat && (
+              {analysisStep === 'results' && aiAnalysis && (
                 <div className="space-y-6">
                   <div className="text-center">
                     <CheckCircle className="w-16 h-16 mx-auto mb-4 text-green-500" />
@@ -275,7 +290,7 @@ const AIAnalysisModal = ({
                         Conversar com o mediador/atendente humano
                       </Button>
                       <Button
-                        onClick={handleFinalizeComplaint}
+                        onClick={handleSatisfiedFlow}
                         variant="outline"
                         className="flex-1"
                       >
@@ -295,10 +310,19 @@ const AIAnalysisModal = ({
       <ChatInterface
         isOpen={showChat}
         onClose={() => setShowChat(false)}
-        onEndChat={handleEndChat}
+        onEndChat={handleEndChatFromChat}
         complaintData={complaintData}
         aiAnalysis={aiAnalysis}
       />
+
+      {/* Satisfaction Survey Modal */}
+      {showSatisfactionSurvey && (
+        <SatisfactionSurveyModal
+          isOpen={showSatisfactionSurvey}
+          onClose={handleCloseSatisfactionSurvey}
+          protocolNumber={protocolNumber}
+        />
+      )}
     </>
   );
 };

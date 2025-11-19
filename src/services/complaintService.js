@@ -9,7 +9,7 @@ const generateProtocol = () => {
   return `DEN-${year}${month}${day}-${random}`;
 };
 
-const generateEmailContent = (complaintData, protocolNumber, aiAnalysis) => {
+const generateEmailContent = (complaintData, protocolNumber, aiAnalysis, chatHistory = null) => {
   const date = new Date().toLocaleDateString('pt-BR');
   const time = new Date().toLocaleTimeString('pt-BR');
   
@@ -48,16 +48,27 @@ const generateEmailContent = (complaintData, protocolNumber, aiAnalysis) => {
         ${complaintData.videos.length > 0 ? `
           <p><strong>Evidências em Vídeo:</strong> ${complaintData.videos.length} vídeo(s) anexado(s)</p>
         ` : ''}
+
+        ${chatHistory ? `
+          <h4 style="color: #0057B8; margin-top: 20px;">Histórico do Chat:</h4>
+          <div style="background: white; padding: 15px; border-radius: 5px; margin: 10px 0; border: 1px solid #ddd; white-space: pre-wrap;">
+            ${chatHistory}
+          </div>
+        ` : ''}
       </div>
       
       ${aiAnalysis ? `
         <div style="background: #fff3e0; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
           <h3 style="color: #f57c00; margin-top: 0;">Análise da IA</h3>
           <div style="background: white; padding: 15px; border-radius: 5px; margin: 10px 0; border: 1px solid #ddd;">
+            <p><strong>Resumo Executivo:</strong></p>
+            <p>${aiAnalysis.executive_summary}</p>
             <p><strong>Artigo do CDC Aplicável:</strong></p>
             <p>${aiAnalysis.cdc_article}</p>
             <p><strong>Orientação para Mediação:</strong></p>
             <p>${aiAnalysis.mediation_guidance}</p>
+            <p><strong>Sugestão de Próxima Etapa:</strong></p>
+            <p>${aiAnalysis.next_step_suggestion}</p>
           </div>
         </div>
       ` : ''}
@@ -112,11 +123,11 @@ export const complaintService = {
   },
 
   // Simular envio de e-mail
-  async sendEmailNotification(complaintData, protocolNumber, aiAnalysis = null) {
+  async sendEmailNotification(complaintData, protocolNumber, aiAnalysis = null, chatHistory = null) {
     // Simular envio de e-mail
     await new Promise(resolve => setTimeout(resolve, 1500));
     
-    const emailContent = generateEmailContent(complaintData, protocolNumber, aiAnalysis);
+    const emailContent = generateEmailContent(complaintData, protocolNumber, aiAnalysis, chatHistory);
     
     // Em um ambiente real, aqui seria chamada uma API de envio de e-mails
     console.log('Enviando e-mail para:', complaintData.email || 'usuário@teste.com');

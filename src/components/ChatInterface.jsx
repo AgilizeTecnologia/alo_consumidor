@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Send, CheckCircle, X, User, Bot, Clock, AlertCircle } from 'lucide-react';
+import { Send, CheckCircle, X, User, Bot, Clock, AlertCircle, Phone, Mail } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Dialog, DialogContent } from './ui/dialog';
 import { complaintService } from '../services/complaintService';
+import { useAuth } from '../contexts/AuthContext'; // Import useAuth
+import { toast } from 'sonner';
 
 const ChatInterface = ({ 
   isOpen, 
@@ -13,53 +15,175 @@ const ChatInterface = ({
   complaintData,
   aiAnalysis 
 }) => {
+  const { user, isAuthenticated } = useAuth();
   const [messages, setMessages] = useState([]);
   const [userInput, setUserInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [protocolNumber, setProtocolNumber] = useState('');
-  const [showProtocol, setShowProtocol] = useState(false);
+  const [chatStep, setChatStep] = useState('initial'); // 'initial', 'collecting_info', 'queue', 'human_chat', 'timeout_options', 'finalized'
+  const [queuePosition, setQueuePosition] = useState(0);
+  const [estimatedWaitTime, setEstimatedWaitTime] = useState(0);
+  const [connectionTimeout, setConnectionTimeout] = useState(null);
+  const [contactPreference, setContactPreference] = useState(null); // 'email' or 'phone'
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState(null);
 
-  // Generate a random protocol number
-  const generateProtocol = () => {
-    const date = new Date();
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const random = Math.floor(1000 + Math.random() * 9000);
-    return `DEN-${year}${month}${day}-${random}`;
-  };
+  // Initial user info for chatbot collection
+  const [collectedInfo, setCollectedInfo] = useState({
+    nome: user?.nome || '',
+    telefone: user?.telefone || '',
+    email: user?.email || '',
+    resumo: complaintData?.description || ''
+  });
+  const [infoStep, setInfoStep] = useState(0); // 0: nome, 1: telefone, 2: email, 3: resumo
+
+  const infoQuestions = [
+    { field: 'nome', question: 'Para começarmos, qual é o seu nome completo?', icon: <User className="w-4 h-4" /> },
+    { field: 'telefone', question: 'Qual o seu telefone para contato (com DDD)?', icon: <Phone className="w-4 h-4" /> },
+    { field: 'email', question: 'E qual o seu melhor e-mail?', icon: <Mail className="w-4 h-4" /> },
+    { field: 'resumo', question: 'Poderia me dar um breve resumo do seu problema em poucas palavras-chave?', icon: <AlertCircle className="w-4 h-4" /> },
+  ];
 
   // Simulate chat conversation
   useEffect(() => {
     if (isOpen) {
       setMessages([]);
-      setProtocolNumber(generateProtocol());
-      
-      // Initial message from mediator
+      setError(null);
+      setChatStep('initial');
+      setCollectedInfo({
+        nome: user?.nome || '',
+        telefone: user?.telefone || '',
+        email: user?.email || '',
+        resumo: complaintData?.description || ''
+      });
+      setInfoStep(0);
+      setConnectionTimeout(null);
+
+      // Start chatbot flow
       setTimeout(() => {
         setMessages(prev => [...prev, {
           id: 1,
-          sender: 'mediator',
-          text: 'Olá! Sou seu mediador. Como posso ajudar você hoje?',
+          sender: 'bot',
+          text: 'Olá! Sou o assistente virtual da Secretaria do Consumidor GDF. Para te conectar com um mediador humano, preciso de algumas informações.',
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         }]);
+        setTimeout(() => {
+          setChatStep('collecting_info');
+          askNextInfoQuestion();
+        }, 1500);
+      }, 1000);
+    } else {
+      // Clear any active timeouts when modal closes
+      if (connectionTimeout) {
+        clearTimeout(connectionTimeout);
+      }
+    }
+  }, [isOpen, user, complaintData]);
+
+  const askNextInfoQuestion = () => {
+    if (infoStep < infoQuestions.length) {
+      const currentQuestion = infoQuestions[infoStep];
+      // Only ask if the info is not already pre-filled
+      if (!collectedInfo[currentQuestion.field]) {
+        setMessages(prev => [...prev, {
+          id: prev.length + 1,
+          sender: 'bot',
+          text: currentQuestion.question,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }]);
+      } else {
+        // If pre-filled, just move to next step
+        setInfoStep(prev => prev + 1);
+        setTimeout(askNextInfoQuestion, 500); // Small delay for natural flow
+      }
+    } else {
+      // All info collected, proceed to queue
+      setTimeout(() => {
+        setMessages(prev => [...prev, {
+          id: prev.length + 1,
+          sender: 'bot',
+          text: 'Ótimo! Todas as informações foram coletadas. Agora vou te colocar na fila para um mediador humano.',
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }]);
+        setChatStep('queue');
+        startQueueSimulation();
       }, 1000);
     }
-  }, [isOpen]);
+  };
 
-  const handleSendMessage = () => {
+  const handleChatbotInput = () => {
     if (!userInput.trim()) return;
 
-    // Add user message
     const newUserMessage = {
       id: messages.length + 1,
       sender: 'user',
       text: userInput,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
-    
+    setMessages(prev => [...prev, newUserMessage]);
+    setUserInput('');
+    setIsTyping(true);
+
+    setTimeout(() => {
+      setIsTyping(false);
+      const currentQuestion = infoQuestions[infoStep];
+      if (currentQuestion) {
+        setCollectedInfo(prev => ({
+          ...prev,
+          [currentQuestion.field]: newUserMessage.text
+        }));
+        setInfoStep(prev => prev + 1);
+        askNextInfoQuestion();
+      }
+    }, 1000);
+  };
+
+  const startQueueSimulation = () => {
+    setQueuePosition(Math.floor(Math.random() * 5) + 1); // Simulate 1-5 people in queue
+    setEstimatedWaitTime(queuePosition * 60 + Math.floor(Math.random() * 30)); // 1-5 mins + 0-30 secs
+
+    setMessages(prev => [...prev, {
+      id: prev.length + 1,
+      sender: 'bot',
+      text: `Você está na posição ${queuePosition} na fila. Tempo de espera estimado: ${Math.ceil(estimatedWaitTime / 60)} minuto(s).`,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    }]);
+
+    // Simulate human connection or timeout
+    const timeoutDuration = 5 * 60 * 1000; // 5 minutes
+    const connectionChance = Math.random(); // Simulate chance of connecting
+
+    const timeoutId = setTimeout(() => {
+      if (connectionChance > 0.3) { // 70% chance to connect to human
+        setMessages(prev => [...prev, {
+          id: prev.length + 1,
+          sender: 'mediator',
+          text: 'Olá! Sou o mediador humano. Recebi suas informações e o resumo da sua denúncia. Como posso te ajudar a partir daqui?',
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }]);
+        setChatStep('human_chat');
+      } else { // 30% chance to timeout
+        setMessages(prev => [...prev, {
+          id: prev.length + 1,
+          sender: 'bot',
+          text: 'Não foi possível alocar um mediador no momento. Deseja que entremos em contato por e-mail ou telefone?',
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }]);
+        setChatStep('timeout_options');
+      }
+    }, timeoutDuration); // 5 minutes simulation
+
+    setConnectionTimeout(timeoutId);
+  };
+
+  const handleHumanChatInput = () => {
+    if (!userInput.trim()) return;
+
+    const newUserMessage = {
+      id: messages.length + 1,
+      sender: 'user',
+      text: userInput,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
     setMessages(prev => [...prev, newUserMessage]);
     setUserInput('');
     setIsTyping(true);
@@ -67,17 +191,14 @@ const ChatInterface = ({
     // Simulate mediator response
     setTimeout(() => {
       setIsTyping(false);
-      
-      // Determine response based on user input
       let response = '';
-      if (userInput.toLowerCase().includes('produto') || userInput.toLowerCase().includes('defeito')) {
-        response = 'Entendo. Pode me contar mais detalhes sobre o produto e o problema?';
-      } else if (userInput.toLowerCase().includes('loja') || userInput.toLowerCase().includes('atendimento')) {
-        response = 'Já tentou resolver diretamente com o estabelecimento?';
+      if (newUserMessage.text.toLowerCase().includes('produto') || newUserMessage.text.toLowerCase().includes('defeito')) {
+        response = 'Entendi. Você tem a nota fiscal ou fotos do produto?';
+      } else if (newUserMessage.text.toLowerCase().includes('loja') || newUserMessage.text.toLowerCase().includes('atendimento')) {
+        response = 'Qual o nome do estabelecimento e a data da ocorrência?';
       } else {
-        response = 'Vamos verificar as opções de solução para o seu caso. Posso te ajudar com isso.';
+        response = 'Certo. Vamos analisar as melhores opções para o seu caso.';
       }
-      
       setMessages(prev => [...prev, {
         id: messages.length + 2,
         sender: 'mediator',
@@ -87,27 +208,65 @@ const ChatInterface = ({
     }, 2000);
   };
 
-  const handleEndChat = async () => {
+  const handleTimeoutOption = async (option) => {
+    setContactPreference(option);
+    setMessages(prev => [...prev, {
+      id: prev.length + 1,
+      sender: 'user',
+      text: `Sim, desejo ser contatado por ${option === 'email' ? 'e-mail' : 'telefone'}.`,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    }]);
+    toast.info(`Seu pedido de contato por ${option === 'email' ? 'e-mail' : 'telefone'} foi registrado.`);
+    await finalizeChat(true, option); // Finalize with contact preference
+  };
+
+  const handleRefuseTimeoutOption = async () => {
+    setMessages(prev => [...prev, {
+      id: prev.length + 1,
+      sender: 'user',
+      text: 'Não, obrigado. Desejo finalizar o atendimento.',
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    }]);
+    await finalizeChat(false); // Finalize without contact preference
+  };
+
+  const finalizeChat = async (contactRequested = false, contactMethod = null) => {
     setIsProcessing(true);
     setError(null);
     
     try {
+      // Clear any active timeouts
+      if (connectionTimeout) {
+        clearTimeout(connectionTimeout);
+        setConnectionTimeout(null);
+      }
+
+      // Prepare chat history for email
+      const chatHistory = messages.map(msg => 
+        `${msg.sender === 'user' ? 'Você' : (msg.sender === 'bot' ? 'Assistente Virtual' : 'Mediador')}: ${msg.text}`
+      ).join('\n');
+
+      const finalComplaintData = {
+        ...complaintData,
+        description: `Denúncia iniciada via chat. Resumo inicial: ${collectedInfo.resumo}. Histórico do chat:\n${chatHistory}`,
+        contactInfo: collectedInfo,
+        contactRequested: contactRequested,
+        contactMethod: contactMethod
+      };
+
       // Process complaint and generate protocol
-      const result = await complaintService.processComplaint(complaintData, aiAnalysis);
+      const result = await complaintService.processComplaint(finalComplaintData, aiAnalysis);
       
       // Send email notification
-      await complaintService.sendEmailNotification(complaintData, result.protocolNumber, aiAnalysis);
+      await complaintService.sendEmailNotification(finalComplaintData, result.protocolNumber, aiAnalysis, chatHistory);
       
-      // Add final message with protocol
-      const finalMessage = {
-        id: messages.length + 1,
-        sender: 'mediator',
+      setMessages(prev => [...prev, {
+        id: prev.length + 1,
+        sender: 'bot',
         text: `Obrigado pelo seu contato! Seu protocolo é: ${result.protocolNumber}. Você receberá um e-mail com o resumo deste atendimento em breve.`,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      };
-      
-      setMessages(prev => [...prev, finalMessage]);
-      setShowProtocol(true);
+      }]);
+      setChatStep('finalized');
     } catch (error) {
       console.error('Error processing complaint:', error);
       setError('Ocorreu um erro ao processar seu atendimento. Por favor, tente novamente.');
@@ -116,8 +275,11 @@ const ChatInterface = ({
     }
   };
 
-  const handleFinalize = () => {
-    onEndChat();
+  const handleFinalizeAndExit = () => {
+    if (chatStep !== 'finalized') {
+      finalizeChat(); // Ensure finalization if not already done
+    }
+    onEndChat(); // Close the modal
   };
 
   if (!isOpen) return null;
@@ -163,11 +325,13 @@ const ChatInterface = ({
                     <div className="flex items-center space-x-2 mb-1">
                       {message.sender === 'user' ? (
                         <User className="w-4 h-4" />
-                      ) : (
+                      ) : message.sender === 'bot' ? (
                         <Bot className="w-4 h-4 text-blue-600" />
+                      ) : (
+                        <User className="w-4 h-4 text-green-600" /> // Human mediator icon
                       )}
                       <span className="text-xs font-medium">
-                        {message.sender === 'user' ? 'Você' : 'Mediador'}
+                        {message.sender === 'user' ? 'Você' : (message.sender === 'bot' ? 'Assistente Virtual' : 'Mediador')}
                       </span>
                       <span className="text-xs opacity-70">{message.timestamp}</span>
                     </div>
@@ -181,7 +345,7 @@ const ChatInterface = ({
                   <div className="bg-white border border-gray-200 p-3 rounded-lg">
                     <div className="flex items-center space-x-2">
                       <Bot className="w-4 h-4 text-blue-600" />
-                      <span className="text-xs font-medium">Mediador</span>
+                      <span className="text-xs font-medium">Assistente Virtual</span>
                       <span className="text-xs opacity-70">
                         <Clock className="w-3 h-3 inline animate-pulse" />
                       </span>
@@ -190,6 +354,36 @@ const ChatInterface = ({
                       <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
                       <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
                       <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.4s'}}></div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {chatStep === 'queue' && (
+                <div className="flex justify-center">
+                  <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg text-center">
+                    <Loader2 className="w-6 h-6 mx-auto mb-2 text-blue-600 animate-spin" />
+                    <p className="text-blue-800 font-semibold">Aguarde na fila...</p>
+                    <p className="text-blue-700 text-sm">Posição: {queuePosition} | Tempo estimado: {Math.ceil(estimatedWaitTime / 60)} min</p>
+                  </div>
+                </div>
+              )}
+
+              {chatStep === 'timeout_options' && (
+                <div className="flex justify-center">
+                  <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg text-center space-y-3">
+                    <p className="text-yellow-800 font-semibold">Não foi possível alocar um mediador no momento.</p>
+                    <p className="text-yellow-700">Deseja que entremos em contato por e-mail ou telefone?</p>
+                    <div className="flex justify-center space-x-2">
+                      <Button onClick={() => handleTimeoutOption('email')} className="bg-blue-600 hover:bg-blue-700">
+                        <Mail className="w-4 h-4 mr-2" /> E-mail
+                      </Button>
+                      <Button onClick={() => handleTimeoutOption('phone')} className="bg-green-600 hover:bg-green-700">
+                        <Phone className="w-4 h-4 mr-2" /> Telefone
+                      </Button>
+                      <Button onClick={handleRefuseTimeoutOption} variant="outline">
+                        Não, obrigado
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -208,36 +402,32 @@ const ChatInterface = ({
             )}
 
             {/* Input Area */}
-            {!showProtocol && !error && (
+            {(chatStep === 'collecting_info' || chatStep === 'human_chat') && !error && (
               <div className="flex space-x-2">
                 <Input
                   value={userInput}
                   onChange={(e) => setUserInput(e.target.value)}
                   placeholder="Digite sua mensagem..."
-                  onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                  onKeyPress={(e) => e.key === 'Enter' && (chatStep === 'collecting_info' ? handleChatbotInput() : handleHumanChatInput())}
                   className="flex-1"
+                  disabled={isProcessing}
                 />
-                <Button onClick={handleSendMessage} disabled={!userInput.trim()}>
+                <Button 
+                  onClick={chatStep === 'collecting_info' ? handleChatbotInput : handleHumanChatInput} 
+                  disabled={!userInput.trim() || isProcessing}
+                >
                   <Send className="w-4 h-4" />
                 </Button>
               </div>
             )}
 
-            {/* Protocol Display */}
-            {showProtocol && (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-6 text-center animate-fade-in-up">
-                <CheckCircle className="w-16 h-16 mx-auto mb-4 text-green-500" />
-                <h3 className="text-lg font-semibold text-green-800 mb-2">Atendimento Finalizado!</h3>
-                <p className="text-green-700 mb-4">
-                  Seu protocolo é: <span className="font-bold text-lg">{protocolNumber}</span>
-                </p>
-                <p className="text-green-700 mb-6">
-                  O resumo deste atendimento e o número do protocolo foram enviados para o seu e-mail.
-                </p>
+            {/* Finalize Button */}
+            {(chatStep === 'human_chat' || chatStep === 'timeout_options' || chatStep === 'finalized') && (
+              <div className="text-center">
                 <Button
-                  onClick={handleFinalize}
+                  onClick={handleFinalizeAndExit}
                   disabled={isProcessing}
-                  className="bg-green-600 hover:bg-green-700 text-white"
+                  className="bg-red-500 hover:bg-red-600 text-white w-full"
                 >
                   {isProcessing ? (
                     <>
