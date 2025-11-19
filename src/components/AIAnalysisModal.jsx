@@ -143,7 +143,7 @@ const AIAnalysisModal = ({
             <CardContent className="space-y-6">
               {analysisStep === 'initial' && (
                 <div className="text-center py-8">
-                  <Brain className="w-16 h-16 mx-auto mb-4 text-blue-500 animate-pulse" />
+                  <img src="/brain.gif" alt="Brain animation" className="w-32 h-32 mx-auto mb-4" />
                   <h3 className="text-lg font-semibold mb-2">Iniciando Análise...</h3>
                   <p className="text-gray-600">
                     Nossa IA está preparando sua análise. Por favor, aguarde.
