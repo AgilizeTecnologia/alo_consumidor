@@ -45,22 +45,37 @@ const AIAnalysisModal = ({
       if (description.toLowerCase().includes('produto com defeito')) {
         return {
           cdc_article: 'Art. 18 - Vício do Produto ou Serviço',
-          mediation_guidance: 'O fornecedor tem 30 dias para sanar o vício. Caso contrário, o consumidor pode exigir a substituição do produto, a restituição imediata da quantia paga ou o abatimento proporcional do preço.'
+          mediation_guidance: 'O fornecedor tem 30 dias para sanar o vício. Caso contrário, o consumidor pode exigir a substituição do produto, a restituição imediata da quantia paga ou o abatimento proporcional do preço.',
+          executive_summary: 'Denúncia classificada como "Vício do Produto" com alta probabilidade de resolução via mediação.',
+          next_step_suggestion: 'Recomendamos iniciar o processo de mediação para buscar a substituição do produto ou restituição do valor.'
         };
       } else if (description.toLowerCase().includes('atendimento ruim')) {
         return {
           cdc_article: 'Art. 6º, III e IV - Direitos Básicos do Consumidor',
-          mediation_guidance: 'O consumidor tem direito à informação clara e adequada e à proteção contra práticas abusivas. Recomenda-se registrar a ocorrência e buscar a mediação para uma solução amigável.'
+          mediation_guidance: 'O consumidor tem direito à informação clara e adequada e à proteção contra práticas abusivas. Recomenda-se registrar a ocorrência e buscar a mediação para uma solução amigável.',
+          executive_summary: 'Denúncia de "Má Qualidade no Atendimento" com foco em direitos básicos do consumidor.',
+          next_step_suggestion: 'Sugere-se formalizar a reclamação e, se necessário, buscar a mediação para resolução.'
         };
       } else if (description.toLowerCase().includes('propaganda enganosa')) {
         return {
           cdc_article: 'Art. 37 - Publicidade Enganosa ou Abusiva',
-          mediation_guidance: 'A publicidade enganosa é proibida. O consumidor pode exigir o cumprimento da oferta, a rescisão do contrato com restituição ou o abatimento proporcional do preço.'
+          mediation_guidance: 'A publicidade enganosa é proibida. O consumidor pode exigir o cumprimento da oferta, a rescisão do contrato com restituição ou o abatimento proporcional do preço.',
+          executive_summary: 'Denúncia de "Publicidade Enganosa" com base em informações inconsistentes.',
+          next_step_suggestion: 'Aconselha-se reunir provas da publicidade e da oferta para iniciar um processo de mediação.'
+        };
+      } else if (description.toLowerCase().includes('cobrança indevida')) {
+        return {
+          cdc_article: 'Art. 42 - Cobrança de Dívidas',
+          mediation_guidance: 'O consumidor cobrado em quantia indevida tem direito à repetição do indébito, por valor igual ao dobro do que pagou em excesso, acrescido de correção monetária e juros legais.',
+          executive_summary: 'Denúncia de "Cobrança Indevida" com potencial para restituição em dobro.',
+          next_step_suggestion: 'Recomendamos contestar a cobrança formalmente e, se não houver resolução, buscar a mediação para a restituição.'
         };
       } else {
         return {
           cdc_article: 'Art. 6º - Direitos Básicos do Consumidor',
-          mediation_guidance: 'Sua denúncia será analisada por um mediador. Mantenha todas as evidências e aguarde o contato para os próximos passos.'
+          mediation_guidance: 'Sua denúncia será analisada por um mediador. Mantenha todas as evidências e aguarde o contato para os próximos passos.',
+          executive_summary: 'Denúncia geral de consumo, requerendo análise detalhada por mediador humano.',
+          next_step_suggestion: 'Aguarde o contato de um mediador para uma análise aprofundada e orientação personalizada.'
         };
       }
     } catch (error) {
@@ -154,7 +169,6 @@ const AIAnalysisModal = ({
               {analysisStep === 'analyzing' && (
                 <div className="space-y-6">
                   <div className="text-center">
-                    {/* Replaced iframe with brain.gif */}
                     <div className="relative w-80 h-80 mx-auto mb-4 flex items-center justify-center">
                       <img src="/brain.gif" alt="Brain animation" className="w-32 h-32" />
                     </div>
@@ -230,12 +244,20 @@ const AIAnalysisModal = ({
                     </h4>
                     <div className="space-y-4">
                       <div>
+                        <strong className="text-blue-700">Resumo Executivo:</strong>
+                        <p className="text-blue-600 mt-1">{aiAnalysis.executive_summary}</p>
+                      </div>
+                      <div>
                         <strong className="text-blue-700">Artigo do CDC Aplicável:</strong>
                         <p className="text-blue-600 mt-1">{aiAnalysis.cdc_article}</p>
                       </div>
                       <div>
                         <strong className="text-blue-700">Orientação para Mediação:</strong>
                         <p className="text-blue-600 mt-1">{aiAnalysis.mediation_guidance}</p>
+                      </div>
+                      <div>
+                        <strong className="text-blue-700">Sugestão de Próxima Etapa:</strong>
+                        <p className="text-blue-600 mt-1">{aiAnalysis.next_step_suggestion}</p>
                       </div>
                     </div>
                   </div>
