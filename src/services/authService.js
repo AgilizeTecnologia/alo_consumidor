@@ -130,7 +130,7 @@ export const authService = {
     
     return {
       success: true,
-      message: `Código de verificação enviado via ${verificationMethod === 'email' ? 'e-mail' : 'WhatsApp'}`,
+      message: `Código de verificação enviado para ${verificationMethod === 'email' ? 'seu e-mail' : 'seu WhatsApp'}. Verifique sua caixa de entrada/spam ou mensagens.`,
       verificationId: verificationData.id
     };
   },
@@ -197,7 +197,7 @@ export const authService = {
     
     return {
       success: true,
-      message: 'Conta criada com sucesso',
+      message: 'Conta criada com sucesso! Você já pode fazer login.',
       user: userWithoutPassword
     };
   },
@@ -260,7 +260,7 @@ export const authService = {
     
     return {
       success: true,
-      message: `Novo código enviado via ${verificationMethod === 'email' ? 'e-mail' : 'WhatsApp'}`
+      message: `Novo código enviado para ${verificationMethod === 'email' ? 'seu e-mail' : 'seu WhatsApp'}.`
     };
   },
 

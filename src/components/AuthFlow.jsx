@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/
 import { Checkbox } from './ui/checkbox';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import LoginForm from './LoginForm';
+import { toast } from 'sonner'; // Import toast for notifications
 
 const AuthFlow = ({ onAuthSuccess, onClose }) => {
   const [currentStep, setCurrentStep] = useState('choice'); // 'choice', 'register', 'verification', 'login'
@@ -161,6 +162,7 @@ const AuthFlow = ({ onAuthSuccess, onClose }) => {
     if (!validateRegisterForm()) return;
     
     setIsLoading(true);
+    setErrors({}); // Clear general errors before new attempt
     
     try {
       // Importar o serviço de autenticação
@@ -170,10 +172,12 @@ const AuthFlow = ({ onAuthSuccess, onClose }) => {
       const result = await authService.register(formData);
       
       if (result.success) {
+        toast.success(result.message);
         setCurrentStep('verification');
       }
     } catch (error) {
       console.error('Erro ao enviar código:', error);
+      toast.error(error.message || 'Erro ao enviar código de verificação. Tente novamente.');
       setErrors({ general: error.message || 'Erro ao enviar código de verificação. Tente novamente.' });
     } finally {
       setIsLoading(false);
@@ -187,6 +191,7 @@ const AuthFlow = ({ onAuthSuccess, onClose }) => {
     if (!validateVerificationForm()) return;
     
     setIsLoading(true);
+    setErrors({}); // Clear general errors before new attempt
     
     try {
       // Importar o serviço de autenticação
@@ -201,11 +206,13 @@ const AuthFlow = ({ onAuthSuccess, onClose }) => {
       });
       
       if (result.success) {
+        toast.success(result.message);
         // Sucesso na autenticação
         onAuthSuccess(result.user);
       }
     } catch (error) {
       console.error('Erro na verificação:', error);
+      toast.error(error.message || 'Código inválido. Tente novamente.');
       setErrors({ general: error.message || 'Código inválido. Tente novamente.' });
     } finally {
       setIsLoading(false);
@@ -215,6 +222,7 @@ const AuthFlow = ({ onAuthSuccess, onClose }) => {
   // Reenviar código
   const handleResendCode = async () => {
     setIsLoading(true);
+    setErrors({}); // Clear general errors before new attempt
     
     try {
       // Importar o serviço de autenticação
@@ -224,11 +232,11 @@ const AuthFlow = ({ onAuthSuccess, onClose }) => {
       const result = await authService.resendVerificationCode(formData.cpf);
       
       if (result.success) {
-        // Mostrar mensagem de sucesso (você pode adicionar um toast aqui)
-        console.log('Código reenviado com sucesso');
+        toast.info(result.message);
       }
     } catch (error) {
       console.error('Erro ao reenviar código:', error);
+      toast.error(error.message || 'Erro ao reenviar código. Tente novamente.');
       setErrors({ general: error.message || 'Erro ao reenviar código. Tente novamente.' });
     } finally {
       setIsLoading(false);
