@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Brain, CheckCircle, Phone, X, Loader2 } from 'lucide-react';
+import { Brain, CheckCircle, Phone, X, Loader2, AlertCircle } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Dialog, DialogContent } from './ui/dialog';
@@ -16,58 +16,69 @@ const AIAnalysisModal = ({
   const [aiAnalysis, setAiAnalysis] = useState(null);
   const [progress, setProgress] = useState(0);
   const [showChat, setShowChat] = useState(false);
+  const [error, setError] = useState(null);
 
   // Simulate AI analysis with 10 seconds
   const simulateAnalysis = async (description) => {
     setAnalysisStep('analyzing');
     setProgress(0);
+    setError(null);
 
-    // Simulate progress updates
-    const progressInterval = setInterval(() => {
-      setProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(progressInterval);
-          return 100;
-        }
-        return prev + Math.random() * 15;
-      });
-    }, 500);
+    try {
+      // Simulate progress updates
+      const progressInterval = setInterval(() => {
+        setProgress(prev => {
+          if (prev >= 100) {
+            clearInterval(progressInterval);
+            return 100;
+          }
+          return prev + Math.random() * 15;
+        });
+      }, 500);
 
-    // Simulate AI processing time (10 seconds as requested)
-    await new Promise(resolve => setTimeout(resolve, 10000));
+      // Simulate AI processing time (10 seconds as requested)
+      await new Promise(resolve => setTimeout(resolve, 10000));
 
-    clearInterval(progressInterval);
+      clearInterval(progressInterval);
 
-    // Generate analysis based on description
-    if (description.toLowerCase().includes('produto com defeito')) {
-      return {
-        cdc_article: 'Art. 18 - Vício do Produto ou Serviço',
-        mediation_guidance: 'O fornecedor tem 30 dias para sanar o vício. Caso contrário, o consumidor pode exigir a substituição do produto, a restituição imediata da quantia paga ou o abatimento proporcional do preço.'
-      };
-    } else if (description.toLowerCase().includes('atendimento ruim')) {
-      return {
-        cdc_article: 'Art. 6º, III e IV - Direitos Básicos do Consumidor',
-        mediation_guidance: 'O consumidor tem direito à informação clara e adequada e à proteção contra práticas abusivas. Recomenda-se registrar a ocorrência e buscar a mediação para uma solução amigável.'
-      };
-    } else if (description.toLowerCase().includes('propaganda enganosa')) {
-      return {
-        cdc_article: 'Art. 37 - Publicidade Enganosa ou Abusiva',
-        mediation_guidance: 'A publicidade enganosa é proibida. O consumidor pode exigir o cumprimento da oferta, a rescisão do contrato com restituição ou o abatimento proporcional do preço.'
-      };
-    } else {
-      return {
-        cdc_article: 'Art. 6º - Direitos Básicos do Consumidor',
-        mediation_guidance: 'Sua denúncia será analisada por um mediador. Mantenha todas as evidências e aguarde o contato para os próximos passos.'
-      };
+      // Generate analysis based on description
+      if (description.toLowerCase().includes('produto com defeito')) {
+        return {
+          cdc_article: 'Art. 18 - Vício do Produto ou Serviço',
+          mediation_guidance: 'O fornecedor tem 30 dias para sanar o vício. Caso contrário, o consumidor pode exigir a substituição do produto, a restituição imediata da quantia paga ou o abatimento proporcional do preço.'
+        };
+      } else if (description.toLowerCase().includes('atendimento ruim')) {
+        return {
+          cdc_article: 'Art. 6º, III e IV - Direitos Básicos do Consumidor',
+          mediation_guidance: 'O consumidor tem direito à informação clara e adequada e à proteção contra práticas abusivas. Recomenda-se registrar a ocorrência e buscar a mediação para uma solução amigável.'
+        };
+      } else if (description.toLowerCase().includes('propaganda enganosa')) {
+        return {
+          cdc_article: 'Art. 37 - Publicidade Enganosa ou Abusiva',
+          mediation_guidance: 'A publicidade enganosa é proibida. O consumidor pode exigir o cumprimento da oferta, a rescisão do contrato com restituição ou o abatimento proporcional do preço.'
+        };
+      } else {
+        return {
+          cdc_article: 'Art. 6º - Direitos Básicos do Consumidor',
+          mediation_guidance: 'Sua denúncia será analisada por um mediador. Mantenha todas as evidências e aguarde o contato para os próximos passos.'
+        };
+      }
+    } catch (error) {
+      setError('Ocorreu um erro durante a análise. Por favor, tente novamente.');
+      throw error;
     }
   };
 
   useEffect(() => {
     if (isOpen && complaintData) {
       const runAnalysis = async () => {
-        const analysis = await simulateAnalysis(complaintData.description);
-        setAiAnalysis(analysis);
-        setAnalysisStep('results');
+        try {
+          const analysis = await simulateAnalysis(complaintData.description);
+          setAiAnalysis(analysis);
+          setAnalysisStep('results');
+        } catch (error) {
+          console.error('Analysis failed:', error);
+        }
       };
       runAnalysis();
     } else if (!isOpen) {
@@ -76,6 +87,7 @@ const AIAnalysisModal = ({
       setProgress(0);
       setAiAnalysis(null);
       setShowChat(false);
+      setError(null);
     }
   }, [isOpen, complaintData]);
 
@@ -194,6 +206,17 @@ const AIAnalysisModal = ({
                       </div>
                     </div>
                   </div>
+                </div>
+              )}
+
+              {error && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+                  <AlertCircle className="w-16 h-16 mx-auto mb-4 text-red-500" />
+                  <h3 className="text-lg font-semibold text-red-800 mb-2">Erro na Análise</h3>
+                  <p className="text-red-700 mb-4">{error}</p>
+                  <Button onClick={() => window.location.reload()} className="bg-red-600 hover:bg-red-700">
+                    Tentar Novamente
+                  </Button>
                 </div>
               )}
 

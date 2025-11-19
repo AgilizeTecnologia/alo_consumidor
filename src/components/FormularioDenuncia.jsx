@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Camera, Video, MapPin, Upload, X, CheckCircle } from 'lucide-react';
+import { Camera, Video, MapPin, Upload, X, CheckCircle, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import AIAnalysisModal from './AIAnalysisModal';
 
@@ -16,6 +16,7 @@ function FormularioDenuncia() {
   const [localizacao, setLocalizacao] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState(null);
 
   const handleFileChange = (e, type) => {
     const files = Array.from(e.target.files);
@@ -38,16 +39,23 @@ function FormularioDenuncia() {
     e.preventDefault();
     
     if (!descricao.trim()) {
-      toast.error('Por favor, descreva o problema antes de enviar a denúncia.');
+      setError('Por favor, descreva o problema antes de enviar a denúncia.');
       return;
     }
 
+    if (descricao.length < 50) {
+      setError('A descrição deve ter pelo menos 50 caracteres para uma análise adequada.');
+      return;
+    }
+
+    setError(null);
     setIsModalOpen(true);
   };
 
   const handleFinalizeComplaint = async (aiAnalysisResult) => {
     setIsModalOpen(false);
     setIsSubmitting(true);
+    setError(null);
 
     try {
       toast.info('Finalizando sua denúncia...');
@@ -78,10 +86,10 @@ function FormularioDenuncia() {
         setLocalizacao('');
       } else {
         const errorData = await response.json();
-        toast.error('Erro ao enviar denúncia: ' + (errorData.message || 'Erro desconhecido'));
+        setError('Erro ao enviar denúncia: ' + (errorData.message || 'Erro desconhecido'));
       }
     } catch (error) {
-      toast.error('Erro ao finalizar denúncia: ' + error.message);
+      setError('Erro ao finalizar denúncia: ' + error.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -97,6 +105,16 @@ function FormularioDenuncia() {
           </p>
         </div>
 
+        {/* Error Display */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+            <div className="flex items-center">
+              <AlertCircle className="w-5 h-5 text-red-500 mr-2" />
+              <p className="text-red-700">{error}</p>
+            </div>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Descrição */}
           <div className="space-y-2">
@@ -107,7 +125,12 @@ function FormularioDenuncia() {
               id="descricao"
               placeholder="Descreva detalhadamente o problema: produto/serviço, estabelecimento, valor, data, etc. Quanto mais detalhes, melhor será a análise."
               value={descricao}
-              onChange={(e) => setDescricao(e.target.value)}
+              onChange={(e) => {
+                setDescricao(e.target.value);
+                if (error && e.target.value.length >= 50) {
+                  setError(null);
+                }
+              }}
               required
               className="min-h-32 focus-gdf resize-none"
               rows={6}
@@ -116,6 +139,11 @@ function FormularioDenuncia() {
               <span className="text-sm text-gray-500">
                 {descricao.length}/1000 caracteres
               </span>
+              {descricao.length < 50 && (
+                <span className="text-sm text-red-500">
+                  Mínimo de 50 caracteres
+                </span>
+              )}
             </div>
           </div>
 
@@ -228,8 +256,8 @@ function FormularioDenuncia() {
           <div className="pt-6">
             <button
               type="submit"
-              disabled={isSubmitting}
-              className="btn-gdf-primary w-full py-4 text-lg font-semibold flex items-center justify-center space-x-2"
+              disabled={isSubmitting || descricao.length < 50}
+              className="btn-gdf-primary w-full py-4 text-lg font-semibold flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? (
                 <>

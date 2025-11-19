@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Send, CheckCircle, X, User, Bot, Clock } from 'lucide-react';
+import { Send, CheckCircle, X, User, Bot, Clock, AlertCircle } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
@@ -19,6 +19,7 @@ const ChatInterface = ({
   const [protocolNumber, setProtocolNumber] = useState('');
   const [showProtocol, setShowProtocol] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [error, setError] = useState(null);
 
   // Generate a random protocol number
   const generateProtocol = () => {
@@ -88,6 +89,7 @@ const ChatInterface = ({
 
   const handleEndChat = async () => {
     setIsProcessing(true);
+    setError(null);
     
     try {
       // Process complaint and generate protocol
@@ -108,16 +110,7 @@ const ChatInterface = ({
       setShowProtocol(true);
     } catch (error) {
       console.error('Error processing complaint:', error);
-      // Add error message
-      const errorMessage = {
-        id: messages.length + 1,
-        sender: 'mediator',
-        text: 'Ocorreu um erro ao processar seu atendimento. Por favor, tente novamente ou entre em contato diretamente.',
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      };
-      
-      setMessages(prev => [...prev, errorMessage]);
-      setShowProtocol(true);
+      setError('Ocorreu um erro ao processar seu atendimento. Por favor, tente novamente.');
     } finally {
       setIsProcessing(false);
     }
@@ -203,8 +196,19 @@ const ChatInterface = ({
               )}
             </div>
 
+            {/* Error Display */}
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
+                <AlertCircle className="w-12 h-12 mx-auto mb-2 text-red-500" />
+                <p className="text-red-700 mb-3">{error}</p>
+                <Button onClick={() => setError(null)} className="bg-red-600 hover:bg-red-700">
+                  Tentar Novamente
+                </Button>
+              </div>
+            )}
+
             {/* Input Area */}
-            {!showProtocol && (
+            {!showProtocol && !error && (
               <div className="flex space-x-2">
                 <Input
                   value={userInput}
