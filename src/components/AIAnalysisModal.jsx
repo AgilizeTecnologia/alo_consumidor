@@ -3,7 +3,7 @@ import { Brain, CheckCircle, Phone, X, Loader2 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Dialog, DialogContent } from './ui/dialog';
-import AtendimentoOptionsModal from './AtendimentoOptionsModal'; // Import the new modal
+import AtendimentoOptionsModal from './AtendimentoOptionsModal';
 
 const AIAnalysisModal = ({ 
   isOpen, 
@@ -17,7 +17,7 @@ const AIAnalysisModal = ({
   const [progress, setProgress] = useState(0);
   const [showAtendimentoOptions, setShowAtendimentoOptions] = useState(false);
 
-  // Simulate AI analysis
+  // Simulate AI analysis with 15 seconds
   const simulateAnalysis = async (description) => {
     setAnalysisStep('analyzing');
     setProgress(0);
@@ -29,12 +29,12 @@ const AIAnalysisModal = ({
           clearInterval(progressInterval);
           return 100;
         }
-        return prev + Math.random() * 15; // Random increment for more natural feel
+        return prev + Math.random() * 15;
       });
     }, 500);
 
-    // Simulate AI processing time (30 seconds as requested)
-    await new Promise(resolve => setTimeout(resolve, 30000));
+    // Simulate AI processing time (15 seconds as requested)
+    await new Promise(resolve => setTimeout(resolve, 15000));
 
     clearInterval(progressInterval);
 
@@ -96,7 +96,7 @@ const AIAnalysisModal = ({
           <Card className="w-full border-none shadow-none">
             <CardHeader className="text-center pb-4">
               <div className="flex justify-between items-center">
-                <div></div> {/* Placeholder for alignment */}
+                <div></div>
                 <CardTitle className="text-xl font-bold text-gdf-gradient flex items-center">
                   <Brain className="w-6 h-6 mr-2" />
                   Análise Inteligente da Denúncia
@@ -126,7 +126,6 @@ const AIAnalysisModal = ({
               {analysisStep === 'analyzing' && (
                 <div className="space-y-6">
                   <div className="text-center">
-                    {/* Brain icon with spinning animation */}
                     <div className="relative w-24 h-24 mx-auto mb-4">
                       <div className="absolute inset-0 flex items-center justify-center">
                         <Brain className="w-16 h-16 text-blue-600 animate-spin" />
@@ -214,7 +213,7 @@ const AIAnalysisModal = ({
                         className="bg-green-600 hover:bg-green-700 text-white flex-1"
                       >
                         <Phone className="w-4 h-4 mr-2" />
-                        Falar com Mediador Humano
+                        Sim, quero conversar com um mediador
                       </Button>
                       <Button
                         onClick={onFinalizeComplaint}
@@ -222,7 +221,7 @@ const AIAnalysisModal = ({
                         className="flex-1"
                       >
                         <CheckCircle className="w-4 h-4 mr-2" />
-                        Estou Satisfeito com a Resposta
+                        Estou satisfeito com a resposta
                       </Button>
                     </div>
                   </div>
