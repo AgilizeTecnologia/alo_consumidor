@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, Shield, Phone, FileText, Home as HomeIcon, List, User, LogOut } from 'lucide-react';
+import { Menu, X, Shield, Phone, FileText, Home as HomeIcon, List, User, LogOut, BookOpen } from 'lucide-react';
 import './App.css';
 import './gdf-styles.css';
 
@@ -15,6 +15,7 @@ import MinhasDenunciasList from './components/MinhasDenunciasList';
 import TotemInterface from './components/TotemInterface';
 import ProtectedRoute from './components/ProtectedRoute';
 import AuthFlow from './components/AuthFlow';
+import PortalCursos from './components/PortalCursos'; // Importar o PortalCursos
 
 // Componente de elementos flutuantes
 const FloatingElements = () => (
@@ -156,6 +157,7 @@ const MobileNav = ({ isOpen, setIsOpen }) => {
     { path: '/atendimento', label: 'Atendimento', icon: Phone },
     { path: '/cdc', label: 'CDC', icon: FileText },
     { path: '/minhas-denuncias', label: 'Minhas Denúncias', icon: List },
+    { path: '/cursos', label: 'Cursos', icon: BookOpen }, // Novo item de navegação
   ];
 
   return (
@@ -233,6 +235,9 @@ const Header = ({ mobileNavOpen, setMobileNavOpen }) => {
               <Link to="/minhas-denuncias" className="text-gray-700 hover:text-blue-600 transition-colors font-medium">
                 Minhas Denúncias
               </Link>
+              <Link to="/cursos" className="text-gray-700 hover:text-blue-600 transition-colors font-medium">
+                Cursos {/* Novo link de navegação */}
+              </Link>
             </nav>
 
             {/* User Info */}
@@ -305,6 +310,7 @@ function AppContent() {
             </ProtectedRoute>
           } />
           <Route path="/totem" element={<TotemInterface />} />
+          <Route path="/cursos" element={<PortalCursos />} /> {/* Nova rota para PortalCursos */}
         </Routes>
       </main>
 
@@ -333,7 +339,7 @@ function AppContent() {
             <p>&copy; 2025 Secretaria do Consumidor GDF. Todos os direitos reservados.</p>
           </div>
         </div>
-      </footer>
+      </div>
     </div>
   );
 }
