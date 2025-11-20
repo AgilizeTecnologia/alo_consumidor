@@ -339,7 +339,7 @@ function AppContent() {
             <p>&copy; 2025 Secretaria do Consumidor GDF. Todos os direitos reservados.</p>
           </div>
         </div>
-      </div>
+      </footer>
     </div>
   );
 }
