@@ -210,9 +210,7 @@ const AIAnalysisModal = ({
             <CardContent className="space-y-6">
               {analysisStep === 'initial' && (
                 <div className="text-center py-8">
-                  <div className="w-32 h-32 mx-auto mb-4 flex items-center justify-center">
-                    <Brain className="w-16 h-16 text-blue-600 animate-pulse" />
-                  </div>
+                  <img src="/brain.gif" alt="Análise em andamento" className="w-32 h-32 mx-auto mb-4" />
                   <h3 className="text-lg font-semibold mb-2">Iniciando Análise...</h3>
                   <p className="text-gray-600">
                     Nossa IA está preparando sua análise. Por favor, aguarde.
@@ -224,9 +222,7 @@ const AIAnalysisModal = ({
                 <div className="space-y-6">
                   <div className="text-center">
                     <div className="relative w-80 h-80 mx-auto mb-4 flex items-center justify-center">
-                      <div className="w-32 h-32 flex items-center justify-center">
-                        <Brain className="w-16 h-16 text-blue-600 animate-pulse" />
-                      </div>
+                      <img src="/brain.gif" alt="Análise em andamento" className="w-32 h-32" />
                     </div>
                     <h3 className="text-lg font-semibold mb-2">Analisando Conteúdo...</h3>
                     <p className="text-gray-600 mb-4">
