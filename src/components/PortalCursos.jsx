@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { BookOpen, GraduationCap, Lock, User, Award, Clock, BarChart, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import AuthFlow from './AuthFlow'; // Importar o componente AuthFlow
+import { useAuth } from '../contexts/AuthContext'; // Para verificar o estado de autenticação
 
 // Dados dos cursos
 const courses = {
@@ -59,15 +61,25 @@ const courses = {
 };
 
 function PortalCursos() {
+  const { isAuthenticated, login } = useAuth();
   const [accessMode, setAccessMode] = useState(null); // 'knowledge' ou 'diploma'
   const [selectedCategory, setSelectedCategory] = useState('direitoConsumidor');
+  const [showAuthFlow, setShowAuthFlow] = useState(false); // Estado para controlar o modal de AuthFlow
 
   const handleAccessModeSelection = (mode) => {
     if (mode === 'diploma') {
-      alert('Para obter diploma, você precisa fazer login. Redirecionando para a página de login...');
-      return;
+      if (!isAuthenticated()) {
+        setShowAuthFlow(true); // Abre o modal de login/cadastro
+        return;
+      }
     }
     setAccessMode(mode);
+  };
+
+  const handleAuthSuccess = (userData) => {
+    login(userData); // Atualiza o contexto de autenticação
+    setShowAuthFlow(false); // Fecha o modal
+    setAccessMode('diploma'); // Define o modo de acesso como diploma
   };
 
   const getLevelColor = (level) => {
@@ -209,6 +221,14 @@ function PortalCursos() {
             </div>
           </div>
         </div>
+
+        {/* Auth Flow Modal */}
+        {showAuthFlow && (
+          <AuthFlow
+            onAuthSuccess={handleAuthSuccess}
+            onClose={() => setShowAuthFlow(false)}
+          />
+        )}
       </div>
     );
   }
@@ -308,4 +328,3 @@ function PortalCursos() {
 }
 
 export default PortalCursos;
-
