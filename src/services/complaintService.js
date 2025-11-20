@@ -61,6 +61,7 @@ const generateEmailContent = (complaintData, protocolNumber, aiAnalysis, chatHis
         <div style="background: #fff3e0; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
           <h3 style="color: #f57c00; margin-top: 0;">Análise da IA</h3>
           <div style="background: white; padding: 15px; border-radius: 5px; margin: 10px 0; border: 1px solid #ddd;">
+            <p><strong>Nível de Risco:</strong> ${aiAnalysis.risk_level}</p>
             <p><strong>Resumo Executivo:</strong></p>
             <p>${aiAnalysis.executive_summary}</p>
             <p><strong>Artigo do CDC Aplicável:</strong></p>
@@ -130,7 +131,7 @@ export const complaintService = {
     const emailContent = generateEmailContent(complaintData, protocolNumber, aiAnalysis, chatHistory);
     
     // Em um ambiente real, aqui seria chamada uma API de envio de e-mails
-    console.log('Enviando e-mail para:', complaintData.email || 'usuário@teste.com');
+    console.log('Enviando e-mail para:', complaintData.email || 'usuario@teste.com');
     console.log('Assunto: Protocolo de Atendimento - Secretaria do Consumidor GDF');
     console.log('Conteúdo do e-mail:', emailContent);
     
@@ -138,7 +139,7 @@ export const complaintService = {
     const sentEmails = JSON.parse(localStorage.getItem('sent_emails') || '[]');
     sentEmails.push({
       id: Date.now().toString(),
-      to: complaintData.email || 'usuário@teste.com',
+      to: complaintData.email || 'usuario@teste.com',
       subject: `Protocolo de Atendimento - ${protocolNumber}`,
       content: emailContent,
       sentAt: new Date().toISOString(),

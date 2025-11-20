@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Send, CheckCircle, X, User, Bot, Clock, AlertCircle, Phone, Mail } from 'lucide-react';
+import { Send, CheckCircle, X, User, Bot, Clock, AlertCircle, Phone, Mail, Loader2 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Dialog, DialogContent } from './ui/dialog';
 import { complaintService } from '../services/complaintService';
-import { useAuth } from '../contexts/AuthContext'; // Import useAuth
+import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
 
 const ChatInterface = ({ 
@@ -427,15 +427,18 @@ const ChatInterface = ({
                 <Button
                   onClick={handleFinalizeAndExit}
                   disabled={isProcessing}
-                  className="bg-red-500 hover:bg-red-600 text-white w-full"
+                  className="bg-red-500 hover:bg-red-600 text-white w-full py-3 font-semibold transition-all hover:scale-105"
                 >
                   {isProcessing ? (
                     <>
-                      <div className="gdf-loader w-4 h-4 mr-2"></div>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
                       Finalizando...
                     </>
                   ) : (
-                    'Finalizar Atendimento e Sair do Sistema'
+                    <>
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                      Finalizar Atendimento e Sair do Sistema
+                    </>
                   )}
                 </Button>
               </div>
