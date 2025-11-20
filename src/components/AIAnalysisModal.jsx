@@ -320,33 +320,31 @@ const AIAnalysisModal = ({
                     <div className="flex flex-col md:flex-row gap-4 justify-center">
                       <Button
                         onClick={handleStartChat}
-                        className="bg-green-600 hover:bg-green-700 text-white flex-1"
+                        className="bg-blue-600 hover:bg-blue-700 text-white flex-1"
                       >
                         <Phone className="w-4 h-4 mr-2" />
-                        (A) Conversar com o Mediador Humano
+                        Conversar com o Mediador Humano
                       </Button>
                       <Button
                         onClick={handleSatisfiedFlow}
-                        variant="outline"
-                        className="flex-1"
+                        className="bg-blue-600 hover:bg-blue-700 text-white flex-1"
                       >
                         <CheckCircle className="w-4 h-4 mr-2" />
-                        (B) Estou Satisfeito com o Atendimento
+                        Finalizar Atendimento
                       </Button>
                       <Button
                         onClick={() => setShowDetails(!showDetails)}
-                        variant="outline"
-                        className="flex-1"
+                        className="bg-blue-600 hover:bg-blue-700 text-white flex-1"
                       >
                         {showDetails ? (
                           <>
                             <ChevronUp className="w-4 h-4 mr-2" />
-                            (C) Ocultar Detalhes
+                            Ocultar Detalhes da Análise
                           </>
                         ) : (
                           <>
                             <ChevronDown className="w-4 h-4 mr-2" />
-                            (C) Ver Detalhes da Análise
+                            Ver Detalhes da Análise
                           </>
                         )}
                       </Button>
