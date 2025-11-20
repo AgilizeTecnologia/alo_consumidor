@@ -222,7 +222,7 @@ const AIAnalysisModal = ({
                 <div className="space-y-6">
                   <div className="text-center">
                     <div className="relative w-80 h-80 mx-auto mb-4 flex items-center justify-center">
-                      <img src="/brain.gif" alt="Análise em andamento" className="w-32 h-32" />
+                      <img src="/brain.gif" alt="Análise em andamento" className="w-48 h-48" />
                     </div>
                     <h3 className="text-lg font-semibold mb-2">Analisando Conteúdo...</h3>
                     <p className="text-gray-600 mb-4">
