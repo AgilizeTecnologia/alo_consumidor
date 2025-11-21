@@ -210,7 +210,7 @@ const AIAnalysisModal = ({
             <CardContent className="space-y-6">
               {analysisStep === 'initial' && (
                 <div className="text-center py-8">
-                  <img src="/ai-analysis.gif" alt="Análise em andamento" className="w-32 h-32 mx-auto mb-4" />
+                  <img src="/avatar_g1.gif" alt="Análise em andamento" className="w-32 h-32 mx-auto mb-4" />
                   <h3 className="text-lg font-semibold mb-2">Iniciando Análise...</h3>
                   <p className="text-gray-600">
                     Nossa IA está preparando sua análise. Por favor, aguarde.
@@ -221,10 +221,18 @@ const AIAnalysisModal = ({
               {analysisStep === 'analyzing' && (
                 <div className="space-y-6">
                   <div className="text-center">
-                    <div className="relative w-80 h-80 mx-auto mb-4 flex items-center justify-center">
-                      <img src="/ai-analysis.gif" alt="Análise em andamento" className="w-48 h-48" />
+                    {/* New loading animation with avatar */}
+                    <div className="loading-container">
+                      <div className="loading-content">
+                        <img 
+                          src="/avatar_analise_documentos_v5_transparent.gif" 
+                          alt="Avatar Patrulha do Consumidor Analisando Documentos" 
+                          className="loading-avatar"
+                        />
+                        <p className="loading-text">Analisando documentos...</p>
+                      </div>
                     </div>
-                    <h3 className="text-lg font-semibold mb-2">Analisando Conteúdo...</h3>
+                    <h3 className="text-lg font-semibold mb-2 mt-4">Análise em Andamento</h3>
                     <p className="text-gray-600 mb-4">
                       Processando sua denúncia e verificando o Código de Defesa do Consumidor
                     </p>
@@ -312,25 +320,22 @@ const AIAnalysisModal = ({
                     </div>
                   </div>
 
-                  {/* Pergunta de continuidade */}
+                  {/* Action buttons - removed the question about proceeding with mediator */}
                   <div className="text-center">
-                    <p className="text-gray-700 mb-6 text-lg font-medium">
-                      Deseja prosseguir com um mediador humano?
-                    </p>
                     <div className="flex flex-col md:flex-row gap-4 justify-center">
                       <Button
                         onClick={handleStartChat}
                         className="bg-blue-600 hover:bg-blue-700 text-white flex-1"
                       >
                         <Phone className="w-4 h-4 mr-2" />
-                        Conversar com o Mediador Humano
+                        A – Conversar com o Mediador
                       </Button>
                       <Button
                         onClick={handleSatisfiedFlow}
                         className="bg-blue-600 hover:bg-blue-700 text-white flex-1"
                       >
                         <CheckCircle className="w-4 h-4 mr-2" />
-                        Finalizar Atendimento
+                        B – Estou Satisfeito com o Atendimento
                       </Button>
                       <Button
                         onClick={() => setShowDetails(!showDetails)}
