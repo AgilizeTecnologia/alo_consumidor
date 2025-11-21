@@ -266,8 +266,11 @@ function FormularioDenuncia() {
                 </>
               ) : (
                 <>
-                  <User className="w-5 h-5" />
-                  <span>Fazer Denúncia</span>
+                  <div className="flex items-center">
+                    <img src="/avatar_g1.gif" alt="Patrulha do Consumidor" className="w-8 h-8 mr-2" />
+                    <User className="w-5 h-5" />
+                    <span>Fazer Denúncia</span>
+                  </div>
                 </>
               )}
             </button>
