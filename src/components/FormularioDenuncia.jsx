@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Camera, Video, MapPin, Upload, X, CheckCircle, AlertCircle } from 'lucide-react';
+import { Camera, Video, MapPin, Upload, X, CheckCircle, AlertCircle, User } from 'lucide-react';
 import { toast } from 'sonner';
 import AIAnalysisModal from './AIAnalysisModal';
 
@@ -266,8 +266,8 @@ function FormularioDenuncia() {
                 </>
               ) : (
                 <>
-                  <CheckCircle className="w-5 h-5" />
-                  <span>Enviar Denúncia</span>
+                  <User className="w-5 h-5" />
+                  <span>Fazer Denúncia</span>
                 </>
               )}
             </button>
