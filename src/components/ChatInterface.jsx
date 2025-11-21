@@ -19,9 +19,7 @@ const ChatInterface = ({
   const [messages, setMessages] = useState([]);
   const [userInput, setUserInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [chatStep, setChatStep] = useState('identity_validation'); // 'identity_validation', 'queue', 'human_chat', 'finalized'
-  const [validationFields, setValidationFields] = useState([]);
-  const [validationAnswers, setValidationAnswers] = useState({});
+  const [chatStep, setChatStep] = useState('queue'); // Changed from 'identity_validation' to 'queue'
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState(null);
   const [queuePosition, setQueuePosition] = useState(0);
@@ -30,100 +28,12 @@ const ChatInterface = ({
   const [protocolNumber, setProtocolNumber] = useState('');
   const [isFinalizing, setIsFinalizing] = useState(false);
 
-  // Possible validation fields
-  const validationOptions = [
-    { field: 'cpf', label: 'CPF', placeholder: '000.000.000-00' },
-    { field: 'dataNascimento', label: 'Data de Nascimento', placeholder: 'DD/MM/AAAA' },
-    { field: 'cidadeNascimento', label: 'Cidade de Nascimento', placeholder: 'Sua cidade de nascimento' },
-    { field: 'idade', label: 'Idade', placeholder: 'Sua idade' },
-    { field: 'telefone', label: 'Telefone', placeholder: '(00) 00000-0000' },
-    { field: 'email', label: 'E-mail', placeholder: 'seu@email.com' }
-  ];
-
-  // Initialize validation fields
+  // Start queue simulation when component opens
   useEffect(() => {
-    if (isOpen && chatStep === 'identity_validation') {
-      // Select 2 random validation fields
-      const shuffled = [...validationOptions].sort(() => 0.5 - Math.random());
-      setValidationFields(shuffled.slice(0, 2));
-      setValidationAnswers({});
-      setError(null);
+    if (isOpen && chatStep === 'queue') {
+      startQueueSimulation();
     }
   }, [isOpen, chatStep]);
-
-  // Handle validation input
-  const handleValidationInput = (field, value) => {
-    setValidationAnswers(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  // Validate user identity
-  const validateIdentity = () => {
-    setIsProcessing(true);
-    setError(null);
-
-    // Simulate validation delay
-    setTimeout(() => {
-      let isValid = true;
-      const errors = {};
-
-      validationFields.forEach(field => {
-        const answer = validationAnswers[field.field];
-        const userData = user;
-
-        switch (field.field) {
-          case 'cpf':
-            if (!answer || answer.replace(/\D/g, '') !== userData.cpf) {
-              isValid = false;
-              errors.cpf = 'CPF incorreto';
-            }
-            break;
-          case 'dataNascimento':
-            if (!answer || answer !== userData.dataNascimento) {
-              isValid = false;
-              errors.dataNascimento = 'Data de nascimento incorreta';
-            }
-            break;
-          case 'cidadeNascimento':
-            if (!answer || answer.toLowerCase() !== userData.cidadeNascimento.toLowerCase()) {
-              isValid = false;
-              errors.cidadeNascimento = 'Cidade de nascimento incorreta';
-            }
-            break;
-          case 'idade':
-            if (!answer || parseInt(answer) !== userData.idade) {
-              isValid = false;
-              errors.idade = 'Idade incorreta';
-            }
-            break;
-          case 'telefone':
-            if (!answer || answer.replace(/\D/g, '') !== userData.telefone.replace(/\D/g, '')) {
-              isValid = false;
-              errors.telefone = 'Telefone incorreto';
-            }
-            break;
-          case 'email':
-            if (!answer || answer.toLowerCase() !== userData.email.toLowerCase()) {
-              isValid = false;
-              errors.email = 'E-mail incorreto';
-            }
-            break;
-        }
-      });
-
-      if (isValid) {
-        setChatStep('queue');
-        startQueueSimulation();
-      } else {
-        setError('Dados de identificação incorretos. Tente novamente.');
-        setValidationAnswers({});
-      }
-
-      setIsProcessing(false);
-    }, 1500);
-  };
 
   // Start queue simulation
   const startQueueSimulation = () => {
@@ -133,7 +43,7 @@ const ChatInterface = ({
     setMessages(prev => [...prev, {
       id: prev.length + 1,
       sender: 'bot',
-      text: `Sua identidade foi confirmada! Você está na posição ${queuePosition} na fila. Tempo de espera estimado: ${Math.ceil(estimatedWaitTime / 60)} minuto(s).`,
+      text: `Bem-vindo ao atendimento! Você está na posição ${queuePosition} na fila. Tempo de espera estimado: ${Math.ceil(estimatedWaitTime / 60)} minuto(s).`,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }]);
 
@@ -264,60 +174,6 @@ const ChatInterface = ({
           </CardHeader>
 
           <CardContent className="space-y-4">
-            {/* Identity Validation */}
-            {chatStep === 'identity_validation' && (
-              <div className="space-y-6">
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Shield className="w-8 h-8 text-blue-600" />
-                  </div>
-                  <h3 className="text-lg font-semibold mb-2">Validação de Identidade</h3>
-                  <p className="text-gray-600">
-                    Para iniciar o atendimento, precisamos confirmar sua identidade.
-                  </p>
-                </div>
-
-                {validationFields.map((field, index) => (
-                  <div key={field.field} className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">
-                      {field.label} *
-                    </label>
-                    <Input
-                      type="text"
-                      placeholder={field.placeholder}
-                      value={validationAnswers[field.field] || ''}
-                      onChange={(e) => handleValidationInput(field.field, e.target.value)}
-                      className="focus-gdf"
-                    />
-                  </div>
-                ))}
-
-                {error && (
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
-                    <AlertCircle className="w-5 h-5 text-red-500 mx-auto mb-2" />
-                    <p className="text-red-700">{error}</p>
-                  </div>
-                )}
-
-                <div className="text-center">
-                  <Button
-                    onClick={validateIdentity}
-                    disabled={isProcessing || validationFields.length !== Object.keys(validationAnswers).length}
-                    className="bg-blue-600 hover:bg-blue-700"
-                  >
-                    {isProcessing ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Validando...
-                      </>
-                    ) : (
-                      'Confirmar Identidade'
-                    )}
-                  </Button>
-                </div>
-              </div>
-            )}
-
             {/* Queue */}
             {chatStep === 'queue' && (
               <div className="text-center py-8">
