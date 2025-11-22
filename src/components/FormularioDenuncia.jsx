@@ -272,10 +272,7 @@ function FormularioDenuncia() {
                   <span>Enviando Denúncia...</span>
                 </>
               ) : (
-                <>
-                  <img src="/avatar_g1.gif" alt="Patrulha do Consumidor" className="w-8 h-8 mr-2" />
-                  <span>Inicie a analise de documentos!</span>
-                </>
+                <span>Inicie a análise de documentos!</span>
               )}
             </button>
             <p className="text-sm text-gray-500 text-center mt-3">
