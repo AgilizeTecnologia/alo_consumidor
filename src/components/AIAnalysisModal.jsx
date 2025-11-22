@@ -23,7 +23,7 @@ const AIAnalysisModal = ({
   const [error, setError] = useState(null);
   const [showDetails, setShowDetails] = useState(false); // Para expandir detalhes
 
-  // Simulate AI analysis with 10 seconds
+  // Simulate AI analysis with 3 seconds (RNF-002)
   const simulateAnalysis = async (description) => {
     setAnalysisStep('analyzing');
     setProgress(0);
@@ -37,12 +37,12 @@ const AIAnalysisModal = ({
             clearInterval(progressInterval);
             return 100;
           }
-          return prev + Math.random() * 15;
+          return prev + Math.random() * 35; // Faster progress for 3s total
         });
-      }, 500);
+      }, 100); // Update more frequently
 
-      // Simulate AI processing time (10 seconds as requested)
-      await new Promise(resolve => setTimeout(resolve, 10000));
+      // Simulate AI processing time (3 seconds as per RNF-002)
+      await new Promise(resolve => setTimeout(resolve, 3000));
 
       clearInterval(progressInterval);
 
