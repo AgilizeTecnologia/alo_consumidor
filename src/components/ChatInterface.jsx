@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Send, CheckCircle, X, User, Bot, Clock, AlertCircle, Phone, Mail, Loader2, Shield } from 'lucide-react';
+import { Send, CheckCircle, X, User, Bot, Clock, AlertCircle, Phone, Mail, Loader2, Shield, FileText, MessageCircle, List, BookOpen, Home } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
@@ -7,6 +7,7 @@ import { Dialog, DialogContent } from './ui/dialog';
 import { complaintService } from '../services/complaintService';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 const ChatInterface = ({ 
   isOpen, 
@@ -16,6 +17,7 @@ const ChatInterface = ({
   aiAnalysis 
 }) => {
   const { user, isAuthenticated, logout } = useAuth();
+  const navigate = useNavigate();
   const [messages, setMessages] = useState([]);
   const [userInput, setUserInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -25,6 +27,7 @@ const ChatInterface = ({
   const [connectionTimeout, setConnectionTimeout] = useState(null);
   const [protocolNumber, setProtocolNumber] = useState('');
   const [isFinalizing, setIsFinalizing] = useState(false);
+  const [showPostChatMenu, setShowPostChatMenu] = useState(false);
 
   // Start chat immediately when component opens
   useEffect(() => {
@@ -91,6 +94,12 @@ const ChatInterface = ({
     }, 2000);
   };
 
+  // Navigate to different pages
+  const navigateTo = (path) => {
+    navigate(path);
+    onClose();
+  };
+
   // Finalize chat and generate protocol
   const finalizeChat = async () => {
     setIsFinalizing(true);
@@ -129,11 +138,10 @@ const ChatInterface = ({
 
       setChatStep('finalized');
       
-      // Auto-close after showing success message
+      // Show post-chat menu after a delay
       setTimeout(() => {
-        logout();
-        onClose();
-      }, 3000);
+        setShowPostChatMenu(true);
+      }, 2000);
 
     } catch (error) {
       console.error('Error finalizing chat:', error);
@@ -170,7 +178,7 @@ const ChatInterface = ({
 
           <CardContent className="space-y-4">
             {/* Chat Messages */}
-            {(chatStep === 'chat' || chatStep === 'finalized') && (
+            {(chatStep === 'chat' || chatStep === 'finalized') && !showPostChatMenu && (
               <div className="h-96 overflow-y-auto space-y-4 p-4 bg-gray-50 rounded-lg">
                 {messages.map((message) => (
                   <div
@@ -225,8 +233,69 @@ const ChatInterface = ({
               </div>
             )}
 
+            {/* Post-Chat Menu */}
+            {showPostChatMenu && (
+              <div className="text-center py-8">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <CheckCircle className="w-8 h-8 text-green-600" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">Atendimento Concluído</h3>
+                <p className="text-gray-600 mb-4">
+                  Seu protocolo é: <span className="font-bold">{protocolNumber}</span>
+                </p>
+                <p className="text-green-600 mb-6">
+                  Atendimento concluído. Seu protocolo foi enviado para o seu e-mail.
+                </p>
+
+                {/* Menu Options */}
+                <div className="grid md:grid-cols-2 gap-4 max-w-2xl mx-auto">
+                  <Button
+                    onClick={() => navigateTo('/denuncias')}
+                    className="flex flex-col items-center space-y-2 h-auto py-6 bg-blue-600 hover:bg-blue-700"
+                  >
+                    <FileText className="w-8 h-8" />
+                    <span>Fazer denúncia</span>
+                  </Button>
+                  
+                  <Button
+                    onClick={() => navigateTo('/atendimento')}
+                    className="flex flex-col items-center space-y-2 h-auto py-6 bg-green-600 hover:bg-green-700"
+                  >
+                    <MessageCircle className="w-8 h-8" />
+                    <span>Atendimento on-line</span>
+                  </Button>
+                  
+                  <Button
+                    onClick={() => navigateTo('/minhas-denuncias')}
+                    className="flex flex-col items-center space-y-2 h-auto py-6 bg-purple-600 hover:bg-purple-700"
+                  >
+                    <List className="w-8 h-8" />
+                    <span>Minhas denúncias</span>
+                  </Button>
+                  
+                  <Button
+                    onClick={() => navigateTo('/cursos')}
+                    className="flex flex-col items-center space-y-2 h-auto py-6 bg-orange-600 hover:bg-orange-700"
+                  >
+                    <BookOpen className="w-8 h-8" />
+                    <span>Cursos</span>
+                  </Button>
+                </div>
+
+                <div className="mt-6">
+                  <Button
+                    onClick={() => navigateTo('/')}
+                    className="flex items-center space-x-2 bg-gray-600 hover:bg-gray-700"
+                  >
+                    <Home className="w-4 h-4" />
+                    <span>Voltar para Início</span>
+                  </Button>
+                </div>
+              </div>
+            )}
+
             {/* Input Area */}
-            {chatStep === 'chat' && (
+            {chatStep === 'chat' && !showPostChatMenu && (
               <div className="flex space-x-2">
                 <Input
                   value={userInput}
@@ -246,7 +315,7 @@ const ChatInterface = ({
             )}
 
             {/* Finalization Button */}
-            {chatStep === 'chat' && (
+            {chatStep === 'chat' && !showPostChatMenu && (
               <div className="text-center pt-4">
                 <Button
                   onClick={finalizeChat}
@@ -265,22 +334,6 @@ const ChatInterface = ({
                     </>
                   )}
                 </Button>
-              </div>
-            )}
-
-            {/* Finalized Message */}
-            {chatStep === 'finalized' && (
-              <div className="text-center py-8">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <CheckCircle className="w-8 h-8 text-green-600" />
-                </div>
-                <h3 className="text-lg font-semibold mb-2">Atendimento Concluído</h3>
-                <p className="text-gray-600 mb-4">
-                  Seu protocolo é: <span className="font-bold">{protocolNumber}</span>
-                </p>
-                <p className="text-green-600">
-                  Atendimento concluído. Seu protocolo foi enviado para o seu e-mail.
-                </p>
               </div>
             )}
           </CardContent>
