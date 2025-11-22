@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -8,15 +10,37 @@ import { Camera, Video, MapPin, Upload, X, CheckCircle, AlertCircle, User } from
 import { toast } from 'sonner';
 import AIAnalysisModal from './AIAnalysisModal';
 
+// React Hook Form and Zod imports
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+
+// Define the Zod schema for form validation
+const formSchema = z.object({
+  descricao: z.string()
+    .min(50, { message: 'A descrição deve ter pelo menos 50 caracteres para uma análise adequada.' })
+    .max(1000, { message: 'A descrição não pode exceder 1000 caracteres.' }),
+  localizacao: z.string().optional(), // Optional field
+});
+
 function FormularioDenuncia() {
   const navigate = useNavigate();
-  const [descricao, setDescricao] = useState('');
   const [fotos, setFotos] = useState([]);
   const [videos, setVideos] = useState([]);
-  const [localizacao, setLocalizacao] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState(null);
+  const [submissionError, setSubmissionError] = useState(null); // Renamed from 'error' to avoid conflict with formState.errors
+
+  // Initialize react-hook-form
+  const { register, handleSubmit, watch, formState: { errors }, setError, clearErrors } = useForm({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      descricao: '',
+      localizacao: '',
+    },
+  });
+
+  const descricao = watch('descricao'); // Watch description field for character count
 
   const handleFileChange = (e, type) => {
     const files = Array.from(e.target.files);
@@ -35,35 +59,24 @@ function FormularioDenuncia() {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (!descricao.trim()) {
-      setError('Por favor, descreva o problema antes de enviar a denúncia.');
-      return;
-    }
-
-    if (descricao.length < 50) {
-      setError('A descrição deve ter pelo menos 50 caracteres para uma análise adequada.');
-      return;
-    }
-
-    setError(null);
-    setIsModalOpen(true);
+  // This function will be called by react-hook-form's handleSubmit if validation passes
+  const onSubmit = (data) => {
+    setSubmissionError(null); // Clear any previous submission errors
+    setIsModalOpen(true); // Open the AI analysis modal
   };
 
   const handleFinalizeComplaint = async (aiAnalysisResult) => {
     setIsModalOpen(false);
     setIsSubmitting(true);
-    setError(null);
+    setSubmissionError(null);
 
     try {
       toast.info('Finalizando sua denúncia...');
       const complaintData = {
-        description: descricao,
+        description: descricao, // Use the watched description
         photos: fotos.map(file => file.name),
         videos: videos.map(file => file.name),
-        location: localizacao,
+        location: watch('localizacao'), // Use the watched location
         aiAnalysis: aiAnalysisResult
       };
 
@@ -79,17 +92,17 @@ function FormularioDenuncia() {
         const result = await response.json();
         toast.success(`Denúncia enviada com sucesso! ID: ${result.id}. Um mediador entrará em contato em breve.`);
         
-        // Resetar formulário
-        setDescricao('');
+        // Resetar formulário (react-hook-form handles its own reset)
+        // For file inputs, we need to reset manually
         setFotos([]);
         setVideos([]);
-        setLocalizacao('');
+        // The form fields will be reset by react-hook-form's defaultValues on re-render or explicit reset
       } else {
         const errorData = await response.json();
-        setError('Erro ao enviar denúncia: ' + (errorData.message || 'Erro desconhecido'));
+        setSubmissionError('Erro ao enviar denúncia: ' + (errorData.message || 'Erro desconhecido'));
       }
     } catch (error) {
-      setError('Erro ao finalizar denúncia: ' + error.message);
+      setSubmissionError('Erro ao finalizar denúncia: ' + error.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -106,16 +119,16 @@ function FormularioDenuncia() {
         </div>
 
         {/* Error Display */}
-        {error && (
+        {(submissionError || errors.root) && ( // Display general submission errors or root errors from Zod
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
             <div className="flex items-center">
               <AlertCircle className="w-5 h-5 text-red-500 mr-2" />
-              <p className="text-red-700">{error}</p>
+              <p className="text-red-700">{submissionError || errors.root?.message}</p>
             </div>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* Descrição */}
           <div className="space-y-2">
             <Label htmlFor="descricao" className="text-lg font-semibold text-gray-700">
@@ -124,24 +137,18 @@ function FormularioDenuncia() {
             <Textarea
               id="descricao"
               placeholder="Descreva detalhadamente o problema: produto/serviço, estabelecimento, valor, data, etc. Quanto mais detalhes, melhor será a análise."
-              value={descricao}
-              onChange={(e) => {
-                setDescricao(e.target.value);
-                if (error && e.target.value.length >= 50) {
-                  setError(null);
-                }
-              }}
+              {...register('descricao')} // Register with react-hook-form
               required
-              className="min-h-32 focus-gdf resize-none"
+              className={`min-h-32 focus-gdf resize-none ${errors.descricao ? 'border-red-500' : ''}`}
               rows={6}
             />
             <div className="flex justify-between items-center">
               <span className="text-sm text-gray-500">
                 {descricao.length}/1000 caracteres
               </span>
-              {descricao.length < 50 && (
+              {errors.descricao && (
                 <span className="text-sm text-red-500">
-                  Mínimo de 50 caracteres
+                  {errors.descricao.message}
                 </span>
               )}
             </div>
@@ -243,10 +250,10 @@ function FormularioDenuncia() {
               id="localizacao"
               type="text"
               placeholder="Ex: Shopping Brasília, Loja X, Asa Norte - Brasília/DF"
-              value={localizacao}
-              onChange={(e) => setLocalizacao(e.target.value)}
-              className="focus-gdf"
+              {...register('localizacao')} // Register with react-hook-form
+              className={`focus-gdf ${errors.localizacao ? 'border-red-500' : ''}`}
             />
+            {errors.localizacao && <p className="text-sm text-red-500">{errors.localizacao.message}</p>}
             <p className="text-sm text-gray-500">
               Informe o endereço completo ou ponto de referência do estabelecimento
             </p>
@@ -256,7 +263,7 @@ function FormularioDenuncia() {
           <div className="pt-6">
             <button
               type="submit"
-              disabled={isSubmitting || descricao.length < 50}
+              disabled={isSubmitting || Object.keys(errors).length > 0} // Disable if submitting or if there are form errors
               className="btn-gdf-primary w-full py-4 text-lg font-semibold flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? (
@@ -333,7 +340,7 @@ function FormularioDenuncia() {
           description: descricao,
           photos: fotos,
           videos: videos,
-          location: localizacao
+          location: watch('localizacao')
         }}
         onFinalizeComplaint={handleFinalizeComplaint}
       />
