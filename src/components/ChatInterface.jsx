@@ -19,44 +19,39 @@ const ChatInterface = ({
   const [messages, setMessages] = useState([]);
   const [userInput, setUserInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [chatStep, setChatStep] = useState('queue'); // Changed from 'identity_validation' to 'queue'
+  const [chatStep, setChatStep] = useState('chat'); // 'chat' for immediate start
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState(null);
-  const [queuePosition, setQueuePosition] = useState(0);
-  const [estimatedWaitTime, setEstimatedWaitTime] = useState(0);
   const [connectionTimeout, setConnectionTimeout] = useState(null);
   const [protocolNumber, setProtocolNumber] = useState('');
   const [isFinalizing, setIsFinalizing] = useState(false);
 
-  // Start queue simulation when component opens
+  // Start chat immediately when component opens
   useEffect(() => {
-    if (isOpen && chatStep === 'queue') {
-      startQueueSimulation();
+    if (isOpen && chatStep === 'chat') {
+      startChatSimulation();
     }
   }, [isOpen, chatStep]);
 
-  // Start queue simulation
-  const startQueueSimulation = () => {
-    setQueuePosition(Math.floor(Math.random() * 5) + 1);
-    setEstimatedWaitTime(queuePosition * 60 + Math.floor(Math.random() * 30));
-
+  // Start chat simulation with pre-configured messages
+  const startChatSimulation = () => {
+    // Add initial bot message
     setMessages(prev => [...prev, {
       id: prev.length + 1,
       sender: 'bot',
-      text: `Bem-vindo ao atendimento! Você está na posição ${queuePosition} na fila. Tempo de espera estimado: ${Math.ceil(estimatedWaitTime / 60)} minuto(s).`,
+      text: 'Olá! Sou o assistente virtual da Patrulha do Consumidor. Estou aqui para ajudar você com sua denúncia. Como posso auxiliar você hoje?',
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }]);
 
-    // Simulate connection to mediator
-    const timeoutDuration = 5 * 60 * 1000; // 5 minutes
+    // Simulate connection to mediator after a delay
+    const timeoutDuration = 3 * 1000; // 3 seconds
     const timeoutId = setTimeout(() => {
       setMessages(prev => [...prev, {
-        id: prev.length + 1,
+        id: prev.length + 2,
         sender: 'mediator',
         text: 'Olá! Sou o mediador humano. Recebi suas informações e posso te ajudar. Como posso auxiliar você hoje?',
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       }]);
-      setChatStep('human_chat');
     }, timeoutDuration);
 
     setConnectionTimeout(timeoutId);
@@ -174,30 +169,8 @@ const ChatInterface = ({
           </CardHeader>
 
           <CardContent className="space-y-4">
-            {/* Queue */}
-            {chatStep === 'queue' && (
-              <div className="text-center py-8">
-                <div className="relative w-24 h-24 mx-auto mb-4">
-                  <div className="absolute inset-0 border-4 border-blue-200 rounded-full animate-ping"></div>
-                  <div className="absolute inset-0 border-4 border-blue-500 rounded-full animate-spin"></div>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <Clock className="w-8 h-8 text-blue-600" />
-                  </div>
-                </div>
-                <h3 className="text-lg font-semibold mb-2">Aguarde na Fila</h3>
-                <p className="text-gray-600 mb-4">
-                  Você está na posição {queuePosition} na fila. Tempo estimado: {Math.ceil(estimatedWaitTime / 60)} minuto(s).
-                </p>
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <p className="text-blue-800 text-sm">
-                    Estamos conectando você com um mediador especializado...
-                  </p>
-                </div>
-              </div>
-            )}
-
             {/* Chat Messages */}
-            {(chatStep === 'human_chat' || chatStep === 'finalized') && (
+            {(chatStep === 'chat' || chatStep === 'finalized') && (
               <div className="h-96 overflow-y-auto space-y-4 p-4 bg-gray-50 rounded-lg">
                 {messages.map((message) => (
                   <div
@@ -253,7 +226,7 @@ const ChatInterface = ({
             )}
 
             {/* Input Area */}
-            {chatStep === 'human_chat' && (
+            {chatStep === 'chat' && (
               <div className="flex space-x-2">
                 <Input
                   value={userInput}
@@ -273,7 +246,7 @@ const ChatInterface = ({
             )}
 
             {/* Finalization Button */}
-            {chatStep === 'human_chat' && (
+            {chatStep === 'chat' && (
               <div className="text-center pt-4">
                 <Button
                   onClick={finalizeChat}

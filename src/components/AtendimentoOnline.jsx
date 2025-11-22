@@ -13,9 +13,12 @@ function AtendimentoOnline() {
 
   const handleIniciarChat = () => {
     if (!isAuthenticated()) {
-      toast.error('Você precisa estar logado para iniciar o chat.');
+      // User is not logged in, redirect to login
+      toast.info('Redirecionando para login...');
+      // The AuthFlow modal will be handled by the ProtectedRoute
       return;
     }
+    // User is logged in, open chat immediately
     setChatModalOpen(true);
   };
 
